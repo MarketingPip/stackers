@@ -67,6 +67,20 @@ ipcMain.handle('write-to-file', (event, filePath, content) => {
   return `File written to ${filePath}`;
 });
 
+
+ipcMain.handle('read-from-file', (event, filePath) => {
+  try {
+    const data = fs.readFileSync(filePath, 'utf-8');
+    if(filePath.endsWith(".json"){
+        return JSON.parse(data);  // Assuming the file contains JSON data
+    };
+   return data;
+  } catch (error) {
+    console.error('Error reading file:', error);
+    return { error: 'Error reading file' };
+  }
+});
+
 // Wrap app startup in try/catch
 app.whenReady()
   .then(() => {
