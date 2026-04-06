@@ -125,6 +125,11 @@ body {
 //  STACKER — Full Arcade Port
 // ═══════════════════════════════════════════════════════════════
 
+let isElectron = false;  
+if (window.require && window.process && window.process.versions && window.process.versions.electron) {
+    Electron = true;
+}
+  
 // ── Sound config ─────────────────────────────────────────────
 // Set SOUND_ENABLED = true and place MP3s in ./sfx/ to use real audio.
 // File names match the arcade asset list exactly.
