@@ -71,7 +71,7 @@ ipcMain.handle('write-to-file', (event, filePath, content) => {
 ipcMain.handle('read-from-file', (event, filePath) => {
   try {
     const data = fs.readFileSync(filePath, 'utf-8');
-    if(filePath.endsWith(".json"){
+    if(filePath.endsWith(".json")){
         return JSON.parse(data);  // Assuming the file contains JSON data
     };
    return data;
