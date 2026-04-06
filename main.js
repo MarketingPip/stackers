@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
-
+const fs = require('fs');
 let mainWindow;
 
 app.disableHardwareAcceleration();
@@ -39,6 +39,12 @@ async function createWindow() {
     app.quit(); // Quit if something goes wrong
   }
 }
+
+// Handle IPC request for writing to file
+ipcMain.handle('write-to-file', (event, filePath, content) => {
+  fs.writeFileSync(filePath, content);
+  return `File written to ${filePath}`;
+});
 
 // Wrap app startup in try/catch
 app.whenReady()
