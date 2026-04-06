@@ -2,7 +2,7 @@
     "name": "stacker-arcade",
     "version": "1.0.0",
     "description": "Stacker Arcade Electron Build",
-    "main": "dist/main.cjs",
+    "main": "dist/main.js",
     "author": "MarketingPipeline",
     "scripts": {
         "start": "electron .",
