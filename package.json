@@ -17,6 +17,7 @@
   "build": {
     "npmRebuild": false,
     "asar": true,
+    "asarUnpack": [],
     "compression": "maximum",
     "appId": "com.stacker.arcade",
     "productName": "Stacker",
@@ -25,9 +26,16 @@
       "index.html",
       "preload.js",
       "package.json",
+      "!**/node_modules/*",
       "!dist/win-unpacked/**/*",
       "!dist/*.exe"
     ],
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "differentialPackage": true,
+      "compress": "lzma" 
+    },
     "extraFiles": [],
     "win": {
       "target": [
