@@ -1,7 +1,18 @@
-const { app, BrowserWindow, ipcMain} = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 let mainWindow;
+
+// Path to the settings file
+const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
+
+// Default settings
+const defaultSettings = {
+  sound_enabled: true,
+  highscores: [],
+  fullscreen: false,
+  rotation: false,
+};
 
 app.disableHardwareAcceleration();
 
@@ -16,6 +27,7 @@ process.on('unhandledRejection', (reason) => {
   app.quit();
 });
 
+// Function to create the window
 async function createWindow() {
   try {
     mainWindow = new BrowserWindow({
@@ -40,6 +52,15 @@ async function createWindow() {
   }
 }
 
+// Function to check if the settings file exists, and create it if not
+function ensureSettingsFile() {
+  if (!fs.existsSync(settingsFilePath)) {
+    // Write the default settings to the file
+    fs.writeFileSync(settingsFilePath, JSON.stringify(defaultSettings, null, 2));
+    console.log('Settings file created with default settings.');
+  }
+}
+
 // Handle IPC request for writing to file
 ipcMain.handle('write-to-file', (event, filePath, content) => {
   fs.writeFileSync(filePath, content);
@@ -48,7 +69,10 @@ ipcMain.handle('write-to-file', (event, filePath, content) => {
 
 // Wrap app startup in try/catch
 app.whenReady()
-  .then(() => createWindow())
+  .then(() => {
+    ensureSettingsFile(); // Ensure settings file exists before creating the window
+    createWindow();
+  })
   .catch((err) => {
     console.error('Error during app startup:', err);
     app.quit();
