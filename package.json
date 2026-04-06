@@ -18,22 +18,13 @@
         "appId": "com.stacker.arcade",
         "productName": "Stacker",
         "compression": "maximum",
-        "asar": true,
         "extraFiles": [],
         "files": [
             "dist/**/*",
             "index.html",
             "preload.js",
-            "package.json",
-            "!**/node_modules/*",
-            "!dist/win-unpacked/**/*",
-            "!dist/*.exe"
+            "package.json"
         ],
-        "nsis": {
-            "oneClick": true,
-            "allowToChangeInstallationDirectory": false,
-            "differentialPackage": true
-        },
         "win": {
             "target": [
                 {
