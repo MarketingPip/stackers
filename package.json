@@ -20,12 +20,6 @@
         "compression": "maximum",
         "extraFiles": [],
         "asar": true,
-        "files": [
-            "dist/main.js",
-            "index.html",
-            "preload.js",
-            "package.json"
-        ],        
         "win": {
             "target": [
                 {
