@@ -8,7 +8,7 @@
     "scripts": {
         "start": "electron .",
         "build:browser": "esbuild main.js --bundle --format=esm --outfile=dist/main.js",
-        "build:exe": "esbuild main.js --bundle --platform=node --outfile=dist/main.js && electron-builder"
+        "build:exe": "esbuild main.js --bundle --platform=node --format=cjs --outfile=dist/main.js && electron-builder"
     },
     "devDependencies": {
         "electron": "22.3.27",
