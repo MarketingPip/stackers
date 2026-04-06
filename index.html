@@ -121,6 +121,7 @@ body {
 </div>
 
 <script type="module">
+ 
 // ═══════════════════════════════════════════════════════════════
 //  STACKER — Full Arcade Port
 // ═══════════════════════════════════════════════════════════════
@@ -204,24 +205,71 @@ function fireEvent(name, detail={}) {
 const rand = (min,max) => Math.floor(Math.random()*(max+1-min))+min;
 const lerp = (a,b,t) => a+(b-a)*t;
 
-async function getHighscore(){
-if(!isElectron){
- return localStorage.getItem("stacker_hs") || sessionStorage.getItem("stacker_hs") || 0;
-};
- const settingsFile = await window.electron.electronBridge('call', ['read-from-file', 'settings.json']);
- console.log(settingsFile);
-}
 
- function setHighscore(newScore) {
-   if(!isElectron){
-       try{
-      localStorage.setItem("stacker_hs", newScore);  // Save to localStorage
-       }catch(){
-      sessionStorage.setItem("stacker_hs", newScore);  // Also save to sessionStorage
+const StorageManager = {
+  dbName: "StackerDB",
+  storeName: "highscores",
+
+  // 1. Safety wrapper for standard storage
+  async save(key, value) {
+    try {
+      window.sessionStorage.setItem(key, value);
+      console.log("Saved to sessionStorage");
+    } catch (e) {
+      console.warn("sessionStorage denied, using IndexedDB fallback.");
+      await this.saveToIndexedDB(key, value);
     }
-   }
-   sessionStorage.setItem("stacker_hs", newScore);  // Also save to sessionStorage
- }
+  },
+
+  // 2. Async IndexedDB Logic
+  saveToIndexedDB(key, value) {
+    return new Promise((resolve) => {
+      const request = indexedDB.open(this.dbName, 1);
+      request.onupgradeneeded = (e) => {
+        e.target.result.createObjectStore(this.storeName, { keyPath: "key" });
+      };
+      request.onsuccess = (e) => {
+        const db = e.target.result;
+        const tx = db.transaction(this.storeName, "readwrite");
+        tx.objectStore(this.storeName).put({ key, value });
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+      };
+    });
+  },
+
+  // 3. Smart Retrieval
+  async get(key) {
+    // Try sessionStorage first
+    try {
+      const val = window.sessionStorage.getItem(key);
+      if (val !== null) return val;
+    } catch (e) {
+      // If blocked, try IndexedDB
+      return await this.getFromIndexedDB(key);
+    }
+    return null;
+  },
+
+  getFromIndexedDB(key) {
+    return new Promise((resolve) => {
+      const request = indexedDB.open(this.dbName, 1);
+      request.onsuccess = (e) => {
+        const db = e.target.result;
+        const tx = db.transaction(this.storeName, "readonly");
+        const store = tx.objectStore(this.storeName);
+        const query = store.get(key);
+        query.onsuccess = () => {
+          resolve(query.result ? query.result.value : 0);
+          db.close();
+        };
+      };
+      request.onerror = () => resolve(0);
+    });
+  }
+};
   
   
 // ── Canvas setup ─────────────────────────────────────────────
@@ -280,6 +328,16 @@ class Particle {
 // ═══════════════════════════════════════════════════════════════
 //  MAIN GAME CLASS
 // ═══════════════════════════════════════════════════════════════
+
+async function getHighscore(){
+  return await StorageManager.get("stacker_hs") || 0;
+}  
+  
+async function setHighscore(score){
+  return await StorageManager.save("stacker_hs", score);
+}    
+  
+const HIGHSCORE = await getHighscore();
 class Stacker {
   constructor() {
     this.state = STATE.ATTRACT;
@@ -311,7 +369,7 @@ class Stacker {
     this.attractPhase = 0;
     this.attractBlink = 0;
     this.score = 0;
-    this.highScore = await getHighscore();
+    this.highScore = HIGHSCORE;
     this.credits = 1; // start with 1 credit for demo; hook coin mech via INSERT_COIN
     this.mvTmDec = 5;
     this.flashMsg = "";
