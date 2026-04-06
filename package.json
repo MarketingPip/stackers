@@ -16,7 +16,6 @@
         "npmRebuild": false,
         "appId": "com.stacker.arcade",
         "productName": "Stacker",
-        "compression": "maximum",
         "asar": true,
         "extraFiles": [],
         "files": [
