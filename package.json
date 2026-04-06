@@ -14,15 +14,11 @@
   "build": {
     "appId": "com.stacker.arcade",
     "productName": "Stacker",
-    "files": [
-      "index.html",
-      "main.js"
-    ],
     "win": {
       "target": [
         {
-          "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "target": "portable",
+          "arch": ["ia32"]
         }
       ]
     }
