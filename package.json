@@ -2,23 +2,25 @@
   "name": "stacker-arcade",
   "version": "1.0.0",
   "description": "Stacker Arcade Electron Build",
-  "main": "main.js",
+  "main": "dist/main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder"
+    "build:renderer": "esbuild src/index.js --bundle --minify --outfile=dist/app.js",
+    "build:main": "esbuild src/main.js --bundle --platform=node --outfile=dist/main.js",
+    "build": "npm run build:main && npm run build:renderer",
+    "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
     "electron": "22.3.27",
-    "electron-builder": "^24.0.0"
+    "electron-builder": "^24.0.0",
+    "esbuild": "^0.19.0"
   },
   "build": {
     "npmRebuild": false,
-    "compression": "maximum",
-    "appId": "com.stacker.arcade",
-    "extraResources": [],
-    "productName": "Stacker",
     "asar": true,
     "compression": "maximum",
+    "appId": "com.stacker.arcade",
+    "productName": "Stacker",
     "electronDownload": {
       "mirror": "https://github.com/electron/electron/releases/download/"
     },
@@ -29,7 +31,6 @@
       "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "dist/**/*",
       "index.html",
-      "main.js",
       "preload.js",
       "package.json"
     ],
@@ -37,7 +38,7 @@
       "target": [
         {
           "target": "portable",
-          "arch": ["ia32"]
+          "arch": ["ia32", "x64"]
         }
       ]
     }
