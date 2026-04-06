@@ -21,12 +21,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies (CI-safe)
-        run: |
-          npm install
-          npm ci --no-fund --no-audit
-        env:
-          CI: true
+      - name: Install dependencies
+        run: npm install
 
       - name: Build main and renderer (treeshaking)
         run: |
@@ -37,7 +33,7 @@ jobs:
           if [ "${{ runner.os }}" == "Windows" ]; then
             npx electron-builder --win portable --ia32 --publish=never
           else
-            npx electron-builder --linux AppImage --publish=never
+            npm run dist -- --publish=never
           fi
 
       - name: Upload artifacts
