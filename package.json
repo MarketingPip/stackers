@@ -1,46 +1,48 @@
 {
-  "name": "stacker-arcade",
-  "version": "1.0.0",
-  "description": "Stacker Arcade Electron Build",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron .",
-    "build:browser": "esbuild main.js --bundle --outfile=dist/main.js",
-    "build:exe": "esbuild main.js --bundle --platform=node --outfile=dist/main.js && electron-builder",
-  },
-  "devDependencies": {
-    "electron": "22.3.27",
-    "electron-builder": "^24.0.0"
-  },
-  "build": {
-    "npmRebuild": false,
-    "appId": "com.stacker.arcade",
-    "productName": "Stacker",
-    "compression": "maximum",
-    "asar": true,
-    "extraFiles": [],
-    "files": [
-      "dist/**/*",
-      "index.html",
-      "preload.js",
-      "package.json",
-      "!**/node_modules/*",
-      "!dist/win-unpacked/**/*",
-      "!dist/*.exe"
-    ], 
-    "nsis": {
-      "oneClick": true,
-      "allowToChangeInstallationDirectory": false,
-      "differentialPackage": true,
-      "compress": "lzma" 
-    },    
-    "win": {
-      "target": [
-        {
-          "target": "portable",
-          "arch": ["ia32"]
+    "name": "stacker-arcade",
+    "version": "1.0.0",
+    "description": "Stacker Arcade Electron Build",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "build:browser": "esbuild main.js --bundle --outfile=dist/main.js",
+        "build:exe": "esbuild main.js --bundle --platform=node --outfile=dist/main.js && electron-builder"
+    },
+    "devDependencies": {
+        "electron": "22.3.27",
+        "electron-builder": "^24.0.0"
+    },
+    "build": {
+        "npmRebuild": false,
+        "appId": "com.stacker.arcade",
+        "productName": "Stacker",
+        "compression": "maximum",
+        "asar": true,
+        "extraFiles": [],
+        "files": [
+            "dist/**/*",
+            "index.html",
+            "preload.js",
+            "package.json",
+            "!**/node_modules/*",
+            "!dist/win-unpacked/**/*",
+            "!dist/*.exe"
+        ],
+        "nsis": {
+            "oneClick": true,
+            "allowToChangeInstallationDirectory": false,
+            "differentialPackage": true,
+            "compress": "lzma"
+        },
+        "win": {
+            "target": [
+                {
+                    "target": "portable",
+                    "arch": [
+                        "ia32"
+                    ]
+                }
+            ]
         }
-      ]
     }
-  }
 }
