@@ -8,27 +8,22 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Install dependencies
         run: npm install
-
-      #- name: Build main and renderer (treeshaking)
-      #  run: |
-      #    npx esbuild main.js --bundle --platform=node --minify --outfile=dist/main.js --log-level=error
-
-
 
       - name: Build Windows (32 + 64 bit)
         if: matrix.os == 'windows-latest'
@@ -42,4 +37,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: stacker-${{ matrix.os }}
-          path: dist/*.exe
+          path: dist/**/*.exe
