@@ -23,8 +23,8 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
-
+        run: npm install --save-dev esbuild
+        
       - name: Build Windows (32 + 64 bit)
         if: matrix.os == 'windows-latest'
         run: npm run build:exe -- --publish=never --win portable --ia32
