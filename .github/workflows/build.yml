@@ -25,13 +25,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Windows (32 + 64 bit)
-        if: matrix.os == 'windows-latest'
-        run: npx electron-builder --win portable --ia32 --publish=never
-
-      - name: Build Windows (32 + 64 bit)        
-        if: matrix.os == 'ubuntu-latest'
-        run: npm run dist -- --publish=never
+      - name: Build app
+        run: npm run dist
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
