@@ -24,15 +24,20 @@ jobs:
 
       - name: Install dependencies
         run: npm install --save-dev esbuild
-        
+
       - name: Build Windows (32 + 64 bit)
         if: matrix.os == 'windows-latest'
-        run: npm run build:exe -- --publish=never --win portable --ia32
+        run: |
+          set NODE_ENV=production
+          npm run build:exe -- --publish=never --win portable --ia32
+        shell: cmd
 
-      - name: Build Linux (32 + 64 bit)        
+      - name: Build Linux (32 + 64 bit)
         if: matrix.os == 'ubuntu-latest'
-        run: npm run build:exe -- --publish=never
-        
+        run: |
+          export NODE_ENV=production
+          npm run build:exe -- --publish=never
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
