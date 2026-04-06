@@ -16,6 +16,7 @@
         "npmRebuild": false,
         "appId": "com.stacker.arcade",
         "productName": "Stacker",
+        "compression": "maximum",
         "asar": true,
         "extraFiles": [],
         "files": [
@@ -30,8 +31,7 @@
         "nsis": {
             "oneClick": true,
             "allowToChangeInstallationDirectory": false,
-            "differentialPackage": true,
-            "compress": "lzma"
+            "differentialPackage": true
         },
         "win": {
             "target": [
