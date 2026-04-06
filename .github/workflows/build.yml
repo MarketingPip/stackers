@@ -24,9 +24,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build main and renderer (treeshaking)
-        run: |
-          npx esbuild main.js --bundle --platform=node --minify --outfile=dist/main.js --log-level=error
+      #- name: Build main and renderer (treeshaking)
+      #  run: |
+      #    npx esbuild main.js --bundle --platform=node --minify --outfile=dist/main.js --log-level=error
+
 
 
       - name: Build Windows (32 + 64 bit)
