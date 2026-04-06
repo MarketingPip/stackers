@@ -28,13 +28,14 @@ jobs:
         run: |
           npx esbuild main.js --bundle --platform=node --minify --outfile=dist/main.js --log-level=error
 
-      - name: Package Electron App
-        run: |
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            npx electron-builder --win portable --ia32 --publish=never
-          else
-            npm run dist -- --publish=never
-          fi
+
+      - name: Build Windows (32 + 64 bit)
+        if: matrix.os == 'windows-latest'
+        run: npx electron-builder --win portable --ia32 --publish=never
+
+      - name: Build Windows (32 + 64 bit)        
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run dist -- --publish=never
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
