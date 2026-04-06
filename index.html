@@ -120,16 +120,17 @@ body {
   </div>
 </div>
 
-<script>
+<script type="module">
 // ═══════════════════════════════════════════════════════════════
 //  STACKER — Full Arcade Port
 // ═══════════════════════════════════════════════════════════════
 
 let isElectron = false;  
 if (window.require && window.process && window.process.versions && window.process.versions.electron) {
-    Electron = true;
-}
-  
+    isElectron = true;
+};
+
+
 // ── Sound config ─────────────────────────────────────────────
 // Set SOUND_ENABLED = true and place MP3s in ./sfx/ to use real audio.
 // File names match the arcade asset list exactly.
@@ -203,6 +204,26 @@ function fireEvent(name, detail={}) {
 const rand = (min,max) => Math.floor(Math.random()*(max+1-min))+min;
 const lerp = (a,b,t) => a+(b-a)*t;
 
+async function getHighscore(){
+if(!isElectron){
+ return localStorage.getItem("stacker_hs") || sessionStorage.getItem("stacker_hs") || 0;
+};
+ const settingsFile = await window.electron.electronBridge('call', ['read-from-file', 'settings.json']);
+ console.log(settingsFile);
+}
+
+ function setHighscore(newScore) {
+   if(!isElectron){
+       try{
+      localStorage.setItem("stacker_hs", newScore);  // Save to localStorage
+       }catch(){
+      sessionStorage.setItem("stacker_hs", newScore);  // Also save to sessionStorage
+    }
+   }
+   sessionStorage.setItem("stacker_hs", newScore);  // Also save to sessionStorage
+ }
+  
+  
 // ── Canvas setup ─────────────────────────────────────────────
 const cv = document.getElementById("c");
 const COLS=7, ROWS=15;
@@ -290,7 +311,7 @@ class Stacker {
     this.attractPhase = 0;
     this.attractBlink = 0;
     this.score = 0;
-  //  this.highScore = +localStorage.getItem("stacker_hs")||0;
+    this.highScore = await getHighscore();
     this.credits = 1; // start with 1 credit for demo; hook coin mech via INSERT_COIN
     this.mvTmDec = 5;
     this.flashMsg = "";
@@ -469,6 +490,7 @@ class Stacker {
       this.state = STATE.GAMEOVER;
       if (this.score > this.highScore) {
         this.highScore = this.score;
+        setHighscore(this.highScore);
        // localStorage.setItem("stacker_hs", this.highScore);
       }
     }
