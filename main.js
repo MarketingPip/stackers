@@ -1,19 +1,18 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-
+import { app, BrowserWindow } from 'electron';
+import path from 'path';
 
 app.disableHardwareAcceleration();
 
 function createWindow() {
-const win = new BrowserWindow({
-  width: 900,
-  height: 1000,
-  backgroundColor: "#000000",
-  webPreferences: {
-    contextIsolation: true,
-    sandbox: false
-  }
-});
+  const win = new BrowserWindow({
+    width: 900,
+    height: 1000,
+    backgroundColor: "#000000",
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: false
+    }
+  });
 
   win.loadFile('index.html');
 
