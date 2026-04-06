@@ -15,10 +15,6 @@
     "esbuild": "^0.19.0"
   },
   "build": {
-    "npmRebuild": false,
-    "asar": true,
-    "asarUnpack": [],
-    "compression": "maximum",
     "appId": "com.stacker.arcade",
     "productName": "Stacker",
     "files": [
@@ -30,17 +26,11 @@
       "!dist/win-unpacked/**/*",
       "!dist/*.exe"
     ],
-    "nsis": {
-      "oneClick": true,
-      "allowToChangeInstallationDirectory": false,
-      "differentialPackage": true,
-      "compress": "lzma" 
-    },
     "extraFiles": [],
     "win": {
       "target": [
         {
-          "target": "portable",
+          "target": "nsis",
           "arch": ["ia32"]
         }
       ]
