@@ -21,9 +21,6 @@
     "compression": "maximum",
     "appId": "com.stacker.arcade",
     "productName": "Stacker",
-    "electronDownload": {
-      "mirror": "https://github.com/electron/electron/releases/download/"
-    },
     "files": [
       "!**/*.map",
       "!**/test/**",
