@@ -5,9 +5,8 @@
   "main": "dist/main.js",
   "scripts": {
     "start": "electron .",
-    "build:renderer": "esbuild main.js --bundle --platform=node --minify --outfile=dist/main.js",
     "build:main": "esbuild main.js --bundle --platform=node --outfile=dist/main.js",
-    "build": "npm run build:main && npm run build:renderer",
+    "build": "npm run build:main",
     "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
@@ -22,22 +21,14 @@
     "appId": "com.stacker.arcade",
     "productName": "Stacker",
     "files": [
-      "!**/*.map",
-      "!**/test/**",
-      "!**/*.md",
-      "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "dist/**/*",
       "index.html",
       "preload.js",
       "package.json"
     ],
+    "extraFiles": [],
     "win": {
-      "target": [
-        {
-          "target": "portable",
-          "arch": ["ia32", "x64"]
-        }
-      ]
+      "target": ["portable"]
     }
   }
 }
