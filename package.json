@@ -5,15 +5,38 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder"
+    "build:main": "esbuild main.js --bundle --platform=node --outfile=dist/main.js",
+    "build:_browser": "esbuild main.js --bundle --outfile=dist/main.js",
+    "build:browser": "npm run build:_browser",
+    "build:exe": "npm run build:main",
+    "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
     "electron": "22.3.27",
     "electron-builder": "^24.0.0"
   },
   "build": {
+    "npmRebuild": false,
     "appId": "com.stacker.arcade",
     "productName": "Stacker",
+    "compression": "maximum",
+    "asar": true,
+    "extraFiles": [],
+    "files": [
+      "dist/**/*",
+      "index.html",
+      "preload.js",
+      "package.json",
+      "!**/node_modules/*",
+      "!dist/win-unpacked/**/*",
+      "!dist/*.exe"
+    ], 
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "differentialPackage": true,
+      "compress": "lzma" 
+    },    
     "win": {
       "target": [
         {
