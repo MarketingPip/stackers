@@ -3,7 +3,6 @@
     "version": "1.0.0",
     "description": "Stacker Arcade Electron Build",
     "main": "dist/main.js",
-    "type": "module",
     "author": "MarketingPipeline",
     "scripts": {
         "start": "electron .",
