@@ -5,11 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build:main": "esbuild main.js --bundle --platform=node --outfile=dist/main.js",
-    "build:_browser": "esbuild main.js --bundle --outfile=dist/main.js",
-    "build:browser": "npm run build:_browser",
-    "build:exe": "npm run build:main",
-    "dist": "npm run build && electron-builder"
+    "build:browser": "esbuild main.js --bundle --outfile=dist/main.js",
+    "build:exe": "esbuild main.js --bundle --platform=node --outfile=dist/main.js && electron-builder",
   },
   "devDependencies": {
     "electron": "22.3.27",
