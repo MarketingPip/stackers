@@ -11,8 +11,8 @@
     "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.0.0",
+    "electron": "22.3.27",
+    "electron-builder": "^24.0.0"
     "esbuild": "^0.19.0"
   },
   "build": {
