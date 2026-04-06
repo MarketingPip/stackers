@@ -13,7 +13,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -21,13 +21,14 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies (CI-safe)
+        run: npm ci --no-fund --no-audit
+        env:
+          CI: true
 
-      - name: Build main and renderer
+      - name: Build main and renderer (treeshaking)
         run: |
-          npx esbuild src/main.js --bundle --platform=node --minify --outfile=dist/main.js --log-level=error
-          npx esbuild src/index.js --bundle --minify --outfile=dist/app.js --log-level=error
+          npx esbuild main.js --bundle --platform=node --minify --outfile=dist/main.js --log-level=error
 
       - name: Package Electron App
         run: |
