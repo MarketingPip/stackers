@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout
@@ -27,7 +27,7 @@ jobs:
 
       - name: Build Windows (32 + 64 bit)
         if: matrix.os == 'windows-latest'
-        run: npx electron-builder --win --ia32 --x64 --publish=never
+        run: npx electron-builder --win portable --ia32 --publish=never
 
       - name: Build Windows (32 + 64 bit)        
         if: matrix.os == 'ubuntu-latest'
