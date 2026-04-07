@@ -78,7 +78,7 @@ async function createWindow() {
       }
     });
 
-    await mainWindow.loadFile('index.html');
+    await mainWindow.loadFile('game.html');
 
     mainWindow.on('closed', () => {
       mainWindow = null;
