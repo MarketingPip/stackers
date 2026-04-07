@@ -132,10 +132,19 @@ if (navigator.userAgent.toLowerCase().includes(' electron/') || typeof process !
 };
 
 
+const DEFAULT_SETTINGS = {
+ sound_enabled:true,
+ free_play: false, // if free play is true - do not show insert credits message. (todo)
+ fullscreen: false // start with full screen (electron main render should handle this)
+}
+  
+const SETTINGS =  isElectron 
+  ? await window.electron.call("read-from-file", 'settings.json') 
+  : DEFAULT_SETTINGS;
 // ── Sound config ─────────────────────────────────────────────
 // Set SOUND_ENABLED = true and place MP3s in ./sfx/ to use real audio.
 // File names match the arcade asset list exactly.
-const SOUND_ENABLED = true;
+const SOUND_ENABLED = SETTINGS.sound;
 const SFX_PATH = "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004"; 
 const SFX_MAP = {
   attract:      "/tbzuxdbx/006. Music - Attract mode music.mp3",
