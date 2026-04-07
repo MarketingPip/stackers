@@ -31,6 +31,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/game.html',
+      filename: 'game.html',
       inject: 'body', // Ensures script is placed in the body for the inliner to find it
     }),
     // Order matters: Inline CSS usually works best before or during the HTML script inlining
