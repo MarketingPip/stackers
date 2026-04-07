@@ -260,7 +260,7 @@ const WIN_SEQ = [
 // ═══════════════════════════════════════════════════════════════
 //  GAME STATES
 // ═══════════════════════════════════════════════════════════════
-const STATE = { ATTRACT:0, PLAYING:1, PLACING:2, GAMEOVER:3, BOARDCLEAR:4, PRIZE:5 };
+const STATE = { ATTRACT:0, PLAYING:1, PLACING:2, GAMEOVER:3, BOARDCLEAR:4, PRIZE:5, STARTING:6 };
 
 // ── Particle system ───────────────────────────────────────────
 class Particle {
@@ -398,6 +398,8 @@ class Stacker {
 
   // ── Game start ───────────────────────────────────────────────
   async _startGame() {
+    if (this.state === STATE.STARTING) return;
+    this.state = STATE.STARTING;
     const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
     sfx.stopAll();
     sfx.play("start")
