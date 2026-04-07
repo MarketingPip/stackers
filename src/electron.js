@@ -29,6 +29,7 @@ const defaultSettings = {
   sound_enabled: true,
   highscore: 0,
   fullscreen: isArcadeMode, // Sync default with launch flag
+  free_play: false, // if free play is true - do not show insert credits message. 
   rotation: false,
 };
 
