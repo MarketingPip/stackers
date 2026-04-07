@@ -2,7 +2,7 @@
     "name": "stacker-arcade",
     "version": "1.0.0",
     "description": "Stacker Arcade Electron Build",
-    "main": "main.js",
+    "main": "src/electron.js",
     "author": "MarketingPipeline",
     "scripts": {
         "start": "electron .",
