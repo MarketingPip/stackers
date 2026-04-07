@@ -70,7 +70,7 @@ async function createWindow() {
       webPreferences: {
         contextIsolation: true,
         sandbox: true,
-        preload: path.join(process.resourcesPath, '..', 'dist', 'preload.js'), 
+        preload: path.join('..', 'dist', 'preload.js'), 
       },
     });
 
