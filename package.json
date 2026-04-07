@@ -21,6 +21,12 @@
         "productName": "Stacker",
         "compression": "maximum",
         "extraFiles": [],
+         "files": [
+            "dist/**/*",
+            "main.js",
+            "preload.js",
+            "package.json"
+         ],       
         "win": {
             "target": [
                 {
