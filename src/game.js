@@ -317,6 +317,24 @@ async function setHighscore(score){
   return await StorageManager.save("stacker_hs", score);
 }    
   
+  
+
+  class Timer {
+  constructor() {
+    this.startTime = Date.now();
+  }
+
+  // Get elapsed time in milliseconds
+  elapsed() {
+    return Date.now() - this.startTime;
+  }
+
+  // Reset the timer
+  reset() {
+    this.startTime = Date.now();
+  }
+}
+  
 const HIGHSCORE = await getHighscore();
 class Stacker {
   constructor() {
@@ -347,6 +365,7 @@ class Stacker {
     this.minorWinBlocks = [];
     this.particles = [];
     this.attractTm = 0;
+    this.attractPlays = 0;
     this.attractPhase = 0;
     this.attractBlink = 0;
     this.score = 0;
@@ -566,6 +585,9 @@ class Stacker {
     this.flashTm  = dur;
   }
 
+  
+  
+  
   // ═══════════════════════════════════════════════════════════
   //  MAIN LOOP
   // ═══════════════════════════════════════════════════════════
@@ -594,12 +616,25 @@ class Stacker {
 
   // ── Attract update ───────────────────────────────────────────
   _updateAttract(dt) {
+    
     this.attractTm += dt;
     this.attractBlink = Math.floor(this.attractTm/500)%2;
+    if(!this.attractTimer){
+      this.attractTimer = new Timer();
+    }
     if (this.attractTm > 8000) {
       this.attractTm = 0;
       this.attractPhase = (this.attractPhase+1)%3;
+  
     }
+    
+    if(this.attractTimer.elapsed() >= 40037){
+
+      sfx.play(["vo_lastBlock","vo_stacker","vo_stacker"][Math.floor(Math.random()*3)]);
+      
+      this.attractTimer.reset()
+    }
+    
   }
 
   // ── Playing update ───────────────────────────────────────────
@@ -1119,11 +1154,11 @@ class ArcadeBooter {
       if(isElectron === false){
        // if in browser, wait for tap to start sounds.
       this.waitingForTap = true;
-
+  
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-
-      // Blinking effect
+      
+      // Blinking effect 
       ctx.globalAlpha = Math.floor(now / 500) % 2 ? 1 : 0;
       ctx.fillStyle = "#fff";
       ctx.font = "14px 'Courier New'";
