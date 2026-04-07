@@ -84,6 +84,8 @@ const SFX_MAP = {
   vo_wow:       "/gvjjrghq/110. Voice - Wow jackpot prize winner.mp3",
   vo_ohNo:      "/joqnrtus/084. Voice - Oh no, game over.mp3",
   vo_stacker:   "/oruvwteo/095. Voice - Stacker!!!.mp3",
+  vo_comePlay: "/ddfugvjk/068. Voice - Come on, play stacker.mp3",
+  vo_comeOn: "/sqbiosav/067. Voice - Come on, give me your best shot.mp3"
 }; 
   
 class SoundManager {
@@ -630,7 +632,7 @@ class Stacker {
     
     if(this.attractTimer.elapsed() >= 40037){
 
-      sfx.play(["vo_lastBlock","vo_stacker","vo_stacker"][Math.floor(Math.random()*3)]);
+      sfx.play(["vo_comePlay","vo_stacker","vo_comeOn"][Math.floor(Math.random()*3)]);
       
       this.attractTimer.reset()
     }
