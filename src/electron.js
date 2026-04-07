@@ -82,7 +82,8 @@ async function createWindow() {
       }
     });
 
-    await mainWindow.loadFile('game.html');
+    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    await mainWindow.loadFile(indexPath);
 
     mainWindow.on('closed', () => {
       mainWindow = null;
