@@ -9,7 +9,7 @@ module.exports = {
   entry: './src/game.js',
 
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, '..', 'dist'), // go up one level
     filename: 'bundle.js', // This will be inlined and won't exist as a separate file in dist
     clean: true,
   },
