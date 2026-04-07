@@ -341,9 +341,9 @@ async function getHighscore(){
 async function saveSettingsToDisk(score){
   const settingsFile = await window.electron.call("read-from-file", 'settings.json');
   settingsFile.highscore = score; // updated score  
-  await window.electron.call("write-to-file", 'settings.json', settingsFile)  
+  await window.electron.call("write-to-file", 'settings.json', JSON.stringify(settingsFile))  
 }
-  
+
 async function setHighscore(score){
   if(isElectron){
    saveSettingsToDisk(score);
