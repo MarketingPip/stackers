@@ -332,7 +332,8 @@ class Particle {
 
 async function getHighscore(){
   if(isElectron){
-  return await window.electron.call("read-from-file", 'settings.json')).highscore;
+  const settings = await window.electron.call("read-from-file", 'settings.json');
+  return settings.highscore;
   }
   return await StorageManager.get("stacker_hs") || 0;
 }  
