@@ -823,7 +823,7 @@ class Stacker {
       const msg = this.credits > 0 ? "▶  PRESS  TO  PLAY  ◀" : "INSERT  COIN  [C KEY]";
       ctx.fillStyle = this.credits>0 ? "#4f4" : "#fa4";
       ctx.fillText(msg, CW/2, CH-30);
-    }
+    } 
 
     ctx.font = "11px 'Courier New'";
     ctx.fillStyle = "#4af6";
@@ -1013,8 +1013,81 @@ class Stacker {
 }
 
 // ── Boot ──────────────────────────────────────────────────────
-const game = new Stacker();
-sfx.play("attract", true);
+  
+class ArcadeBooter {
+  constructor(canvas, context, onComplete) {
+    this.cv = canvas;
+    this.ctx = context;
+    this.onComplete = onComplete;
+    this.startTime = Date.now();
+    this.logs = [
+      "MEMORY CHECK............OK",
+      "I/O CHIPSET.............OK",
+      "SOUND ROM...............LOADED",
+      "VIDEO DRIVER............READY",
+      "INITIALIZING STACKER OS..."
+    ];
+    this.render();
+  }
+
+  render() {
+    const elapsed = Date.now() - this.startTime;
+    const { ctx, cv } = this;
+
+    // Clear Screen
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+
+    if (elapsed < 3000) {
+      // Phase 1: BIOS Text
+      ctx.fillStyle = "#4af"; 
+      ctx.font = "14px 'Courier New'";
+      ctx.textAlign = "left";
+      
+      const lineCount = Math.floor(elapsed / 500);
+      for (let i = 0; i <= lineCount; i++) {
+        if (this.logs[i]) ctx.fillText(`> ${this.logs[i]}`, 30, 60 + (i * 25));
+      }
+      // Blinking Cursor
+      if (Math.floor(elapsed / 300) % 2) {
+        ctx.fillRect(30, 65 + (Math.min(lineCount, 4) * 25), 10, 2);
+      }
+    } 
+    else if (elapsed < 6000) {
+      // Phase 2: Logo Reveal
+      const alpha = Math.min(1, (elapsed - 3000) / 1000);
+      ctx.globalAlpha = alpha;
+      ctx.textAlign = "center";
+      
+      // Blue Glow
+      ctx.shadowColor = "#4af";
+      //ctx.shadowBlur = 25;
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 50px 'Courier New'";
+      ctx.fillText("OPENSTACKER", CW / 2, CH / 2);
+      
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#ff4";
+      ctx.font = "12px 'Courier New'";
+      ctx.fillText("POWERED BY JARED VAN VALKENGOED", CW / 2, CH / 2 + 40);
+      ctx.globalAlpha = 1;
+    } 
+    else {
+      // Done!
+      this.onComplete();
+      return;
+    }
+
+    requestAnimationFrame(() => this.render());
+  }
+}  
+ 
+ new ArcadeBooter(cv, ctx, () => {
+  // This callback runs ONLY after the 6-second animation finishes
+  const game = new Stacker();
+  sfx.play("attract", true);
+   
+ })
 
 // ── External API for Arduino / hardware integration ───────────
 window.STACKER = {
