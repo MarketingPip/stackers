@@ -127,7 +127,7 @@ body {
 // ═══════════════════════════════════════════════════════════════
 
 let isElectron = false;  
-if (window.require && window.process && window.process.versions && window.process.versions.electron) {
+if (navigator.userAgent.toLowerCase().includes(' electron/')) {
     isElectron = true;
 };
 
