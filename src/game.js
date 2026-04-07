@@ -1,4 +1,4 @@
-window.addEventListener('DOMContentLoaded', async () => { 
+    window.addEventListener('DOMContentLoaded', async () => { 
 
   /*
 
@@ -408,7 +408,8 @@ class Stacker {
     this._resetBoard();
     this.pos = {x: rand(0, COLS-1), y: ROWS-1};
     this.dir = this.pos.x >= COLS-1 ? "l" : "r";
-    // this.rowLen = 3;
+    this.rowLen = 3; //(user can set here via settings)
+    this.moveInterval= 100;
     this.moveInterval *= 1; //0.92; (user can set here via settings)
     this.mvTm = 0;
     this.placeTime = 0;
@@ -1073,6 +1074,4 @@ fsBtn.onclick = () => {
     document.exitFullscreen();
   }
 };  
-  
-  
 });
