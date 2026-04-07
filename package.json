@@ -23,6 +23,12 @@
         "productName": "Stacker",
         "compression": "maximum",
         "extraFiles": [],
+        "files": [
+            "dist/game.html",
+            "src/electron.js",
+            "preload.js",
+            "package.json"
+        ],    
         "win": {
             "target": [
                 {
