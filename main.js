@@ -14,6 +14,10 @@ const defaultSettings = {
   rotation: false,
 };
 
+function emit(method, ...args){
+  mainWindow.webContents.send(method, args);
+}
+
 app.disableHardwareAcceleration();
 
 // Catch any uncaught errors in the main process
