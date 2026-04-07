@@ -81,7 +81,7 @@ jobs:
         with:
           name: stacker-windows
           path: |
-            dist/**/*.exe
+            dist/*.exe
          #   dist/**/*.zip
 
       - name: Upload Linux artifacts
