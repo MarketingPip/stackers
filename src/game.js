@@ -52,7 +52,7 @@ const SETTINGS =  isElectron
 // Set SOUND_ENABLED = true and place MP3s in ./sfx/ to use real audio.
 // File names match the arcade asset list exactly.
 const SOUND_ENABLED = SETTINGS.sound_enabled;
-const SFX_PATH = "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004"; 
+const SFX_PATH = SETTINGS.sfx_path; 
 const SFX_MAP = {
   attract:      "/tbzuxdbx/006. Music - Attract mode music.mp3",
   start:        "/vaqewwrs/061. SFX - Start up.mp3",
