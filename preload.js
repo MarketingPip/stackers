@@ -2,9 +2,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electron', {
-  writeToFile: (filePath, content) => ipcRenderer.invoke('write-to-file', filePath, content)
-});
-
-contextBridge.exposeInMainWorld('electronBridge', {
+  writeToFile: (filePath, content) => ipcRenderer.invoke('write-to-file', filePath, content),
   call: (method, args = []) => ipcRenderer.invoke(method, ...args)
 });
+
+ 
