@@ -66,7 +66,7 @@ jobs:
       - name: Build Windows
         if: matrix.os == 'windows-latest'
         run: |
-          set NODE_ENV=production && npm run build:exe -- --publish=never
+          set NODE_ENV=production && npm run build:exe -- --publish=never --win portable --ia32
         shell: cmd
 
       - name: Build Linux
