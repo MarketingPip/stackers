@@ -1,4 +1,6 @@
-    window.addEventListener('DOMContentLoaded', async () => { 
+import defaultSettings from "./settings.js";
+
+window.addEventListener('DOMContentLoaded', async () => { 
 
   /*
 
@@ -41,11 +43,7 @@ if (navigator.userAgent.toLowerCase().includes(' electron/') || typeof process !
 };
 
 
-const DEFAULT_SETTINGS = {
- sound_enabled:true,
- free_play: false, // if free play is true - do not show insert credits message. (todo)
- fullscreen: false // start with full screen (electron main render should handle this)
-}
+const DEFAULT_SETTINGS = defaultSettings;
   
 const SETTINGS =  isElectron 
   ? await window.electron.call("read-from-file", 'settings.json') 
