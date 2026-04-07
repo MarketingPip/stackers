@@ -390,7 +390,7 @@ class Stacker {
     );
   }
   
-  asyc _action(e) {
+  async _action(e) {
     if (this.state === STATE.ATTRACT) {
       if (this.credits > 0) {
         this.credits--;
