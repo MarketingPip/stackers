@@ -23,7 +23,7 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install --save-dev html-loader style-loader esbuild html-webpack-plugin html-inline-css-webpack-plugin html-inline-script-webpack-plugin
+        run: npm install --save-dev html-loader style-loader css-loader esbuild html-webpack-plugin html-inline-css-webpack-plugin html-inline-script-webpack-plugin
 
       - name: Build Windows (32 + 64 bit)
         if: matrix.os == 'windows-latest'
