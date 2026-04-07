@@ -11,4 +11,4 @@ const defaultSettings = {
   sfx_path: "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004"
 };
 
-export default defaultSettings;
+module.exports = defaultSettings;
