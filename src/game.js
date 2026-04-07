@@ -760,6 +760,8 @@ class Stacker {
 
   // ── Attract screen ───────────────────────────────────────────
   _drawAttract() {
+    
+    /// TODO: probably improve screen when waiting for countdown in game - show visual if this.pauseActions === true override prize display phases.. (real countdown possibly.)
     const t = this.attractTm;
 
     // animated blocks demo
@@ -788,7 +790,7 @@ class Stacker {
     ctx.font = "bold 13px 'Courier New'";
     ctx.fillStyle = "#4af";
     ctx.fillText("★  ARCADE EDITION  ★", CW/2, logoY+28);
-
+ 
     // prize display phases
     ctx.font = "bold 15px 'Courier New'";
     if (this.attractPhase === 0) {
@@ -817,13 +819,21 @@ class Stacker {
     }
 
     // blink insert/press
-    if (this.attractBlink) {
+    if (this.attractBlink && this.pauseActions != true) {
       ctx.font = "bold 14px 'Courier New'";
       ctx.fillStyle = "#fff";
       const msg = this.credits > 0 ? "▶  PRESS  TO  PLAY  ◀" : "INSERT  COIN  [C KEY]";
       ctx.fillStyle = this.credits>0 ? "#4f4" : "#fa4";
       ctx.fillText(msg, CW/2, CH-30);
     } 
+     
+     if (this.attractBlink && this.pauseActions === true) {
+        ctx.font = "bold 14px 'Courier New'";
+      ctx.fillStyle = "#fff";
+      const msg = "GET READY";
+      ctx.fillStyle =  "#fa4";
+      ctx.fillText(msg, CW/2, CH-30);
+     }
 
     ctx.font = "11px 'Courier New'";
     ctx.fillStyle = "#4af6";
@@ -1065,13 +1075,13 @@ class ArcadeBooter {
       ctx.fillStyle = "#fff";
       ctx.font = "bold 50px 'Courier New'";
       ctx.fillText("OPENSTACKER", CW / 2, CH / 2);
-      
+       
       ctx.shadowBlur = 0;
       ctx.fillStyle = "#ff4";
       ctx.font = "12px 'Courier New'";
       ctx.fillText("POWERED BY JARED VAN VALKENGOED", CW / 2, CH / 2 + 40);
       ctx.globalAlpha = 1;
-    } 
+    }  
     else {
       // Done!
       this.onComplete();
