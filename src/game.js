@@ -365,22 +365,36 @@ class Stacker {
   }
 
   // ── Input ────────────────────────────────────────────────────
-  _bindInput() {
-    cv.addEventListener("click", e => this._action(e));
-    document.addEventListener("keydown", e => {
-      if (e.code==="Space"||e.code==="Enter"||e.code==="ArrowDown") {
-        e.preventDefault(); this._action(e);
-      }
-      if (e.code==="KeyC") this.insertCoin();
+ _bindInput() {
+    cv.addEventListener("click", async (e) => {
+      await this._action(e);
     });
-    cv.addEventListener("touchstart", e => { e.preventDefault(); this._action(e); }, {passive:false});
+  
+    document.addEventListener("keydown", async (e) => {
+      if (e.code === "Space" || e.code === "Enter" || e.code === "ArrowDown") {
+        e.preventDefault();
+        await this._action(e);
+      }
+      if (e.code === "KeyC") {
+        this.insertCoin();
+      }
+    });
+  
+    cv.addEventListener(
+      "touchstart",
+      async (e) => {
+        e.preventDefault();
+        await this._action(e);
+      },
+      { passive: false }
+    );
   }
-
-  _action(e) {
+  
+  asyc _action(e) {
     if (this.state === STATE.ATTRACT) {
       if (this.credits > 0) {
         this.credits--;
-        this._startGame();
+        await this._startGame();
       } else {
         this._flash("INSERT COIN  [C KEY]");
       }
@@ -398,8 +412,8 @@ class Stacker {
 
   // ── Game start ───────────────────────────────────────────────
   async _startGame() {
-    if (this.state === STATE.STARTING) return;
-    this.state = STATE.STARTING;
+    // if (this.state === STATE.STARTING) return;
+    //this.state = STATE.STARTING;
     const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
     sfx.stopAll();
     sfx.play("start")
@@ -992,7 +1006,7 @@ window.STACKER = {
     rowLen: game.rowLen,
     board:  game.board,
   }),
-  fireAction: () => game._action({}),
+  fireAction: async () => game._action({}),
 };
 
   
