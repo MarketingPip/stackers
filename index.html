@@ -330,10 +330,16 @@ class Particle {
 // ═══════════════════════════════════════════════════════════════
 
 async function getHighscore(){
+  if(isElectron){
+   console.log(await window.electron.electronBridge('call', ['read-from-file', 'settings.json']).highscores);
+  }
   return await StorageManager.get("stacker_hs") || 0;
 }  
   
 async function setHighscore(score){
+  if(isElectron){
+   console.log('save to file');
+  }
   return await StorageManager.save("stacker_hs", score);
 }    
   
