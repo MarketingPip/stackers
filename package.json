@@ -23,6 +23,7 @@
         "extraFiles": [],
          "files": [
             "dist/**/*",
+            "src/**/*",
             "main.js",
             "preload.js",
             "package.json"
