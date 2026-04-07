@@ -1,7 +1,26 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+
 let mainWindow;
+
+// --- ARCADE SETUP ---
+// Check if launched with --fullscreen or --arcade flags
+const args = process.argv.slice(1);
+const isArcadeMode = args.includes('--fullscreen') || args.includes('--arcade');
+
+// Prevent multiple instances (crucial for arcade front-ends)
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
 
 const USER_DATA_PATH = app.getPath('userData');
 
@@ -9,13 +28,15 @@ const USER_DATA_PATH = app.getPath('userData');
 const defaultSettings = {
   sound_enabled: true,
   highscore: 0,
-  fullscreen: false,
+  fullscreen: isArcadeMode, // Sync default with launch flag
   rotation: false,
 };
 
 // emit events from nodejs back to HTML
-function emit(method, ...args){
-  mainWindow.webContents.send(method, ...args);
+function emit(method, ...args) {
+  if (mainWindow) {
+    mainWindow.webContents.send(method, ...args);
+  }
 }
 
 app.disableHardwareAcceleration();
@@ -38,29 +59,40 @@ async function createWindow() {
       width: 900,
       height: 1000,
       backgroundColor: '#000000',
+      fullscreen: isArcadeMode,    // Start in fullscreen if requested
+      autoHideMenuBar: true,       // Native look for Arcade cabinets
+      alwaysOnTop: isArcadeMode,   // Keeps focus in arcade environments
       webPreferences: {
         contextIsolation: true,
         sandbox: true,
-        preload: path.join(__dirname, 'preload.js'), // optional
+        preload: path.join(__dirname, 'preload.js'), 
       },
     });
 
-    await mainWindow.loadFile('index.html'); // await ensures load errors are caught
+    // --- ARCADE EXIT LOGIC ---
+    // Listen for the Escape key to close the app (standard arcade behavior)
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+      if (input.key === 'Escape' && input.type === 'keyDown') {
+        app.quit();
+      }
+    });
+
+    await mainWindow.loadFile('index.html');
 
     mainWindow.on('closed', () => {
       mainWindow = null;
     });
   } catch (err) {
     console.error('Failed to create window or load file:', err);
-    app.quit(); // Quit if something goes wrong
+    app.quit();
   }
 }
-
 
 // Helper to resolve paths to the userData folder safely
 function getSafePath(fileName) {
   return path.join(USER_DATA_PATH, fileName);
 }
+
 function ensureSettingsFile() {
   const settingsPath = getSafePath('settings.json');
   if (!fs.existsSync(settingsPath)) {
@@ -71,7 +103,6 @@ function ensureSettingsFile() {
 
 // --- IPC HANDLERS ---
 
-// Modified to automatically use the userData path
 ipcMain.handle('write-to-file', (event, fileName, content) => {
   const fullPath = getSafePath(fileName);
   fs.writeFileSync(fullPath, content);
@@ -93,11 +124,10 @@ ipcMain.handle('read-from-file', (event, fileName) => {
   }
 });
 
-
-// Wrap app startup in try/catch
+// Wrap app startup
 app.whenReady()
   .then(() => {
-    ensureSettingsFile(); // Ensure settings file exists before creating the window
+    ensureSettingsFile();
     createWindow();
   })
   .catch((err) => {
@@ -105,12 +135,10 @@ app.whenReady()
     app.quit();
   });
 
-// macOS: recreate window on dock icon click
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-// Quit app on all windows closed (Windows/Linux/macOS)
 app.on('window-all-closed', () => {
   app.quit();
 });
