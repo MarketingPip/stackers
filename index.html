@@ -331,14 +331,20 @@ class Particle {
 
 async function getHighscore(){
   if(isElectron){
-   console.log(await window.electron.call("read-from-file", 'settings.json'));
+  return await window.electron.call("read-from-file", 'settings.json').highscore
   }
   return await StorageManager.get("stacker_hs") || 0;
 }  
+
+async function saveSettingsToDisk(score){
+  const settingsFile = await window.electron.call("read-from-file", 'settings.json');
+  settingsFile.highscore = score; // updated score  
+  await window.electron.call("write-to-file", 'settings.json', settingsFile)  
+}
   
 async function setHighscore(score){
   if(isElectron){
-   console.log('save to file');
+   saveSettingsToDisk(score);
   }
   return await StorageManager.save("stacker_hs", score);
 }    
