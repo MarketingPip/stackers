@@ -8,7 +8,7 @@ const USER_DATA_PATH = app.getPath('userData');
 // Default settings
 const defaultSettings = {
   sound_enabled: true,
-  highscores: [],
+  highscore: 0,
   fullscreen: false,
   rotation: false,
 };
