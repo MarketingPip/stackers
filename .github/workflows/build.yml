@@ -37,6 +37,7 @@ jobs:
             postcss-loader ^
             tailwindcss ^
             autoprefixer ^
+            html-inline-script-webpack-plugin ^
             html-loader
         shell: cmd
         if: matrix.os == 'windows-latest'
