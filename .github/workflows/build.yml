@@ -21,20 +21,56 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          #cache: npm
 
-      # ✅ Use lockfile instead of reinstalling everything manually
+      # ✅ Manual install (fixed formatting + no duplicates)
       - name: Install dependencies
-        run: npm install
-        #run: npm ci
+        run: |
+          npm install --save-dev ^
+            webpack ^
+            webpack-cli ^
+            webpack-dev-server ^
+            html-webpack-plugin ^
+            mini-css-extract-plugin ^
+            css-loader ^
+            style-loader ^
+            postcss ^
+            postcss-loader ^
+            tailwindcss ^
+            autoprefixer ^
+            html-loader
+        shell: cmd
+        if: matrix.os == 'windows-latest'
 
-      # ✅ Build (cross-platform safe)
-      - name: Build app
-        run: npm run build:exe -- --publish=never
-        env:
-          NODE_ENV: production
+      - name: Install dependencies (Linux)
+        run: |
+          npm install --save-dev \
+            webpack \
+            webpack-cli \
+            webpack-dev-server \
+            html-webpack-plugin \
+            mini-css-extract-plugin \
+            css-loader \
+            style-loader \
+            postcss \
+            postcss-loader \
+            tailwindcss \
+            autoprefixer \
+            html-loader
+        if: matrix.os == 'ubuntu-latest'
 
-      # ✅ Upload Windows artifacts
+      # ✅ Build (cross-platform env)
+      - name: Build Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          set NODE_ENV=production && npm run build:exe -- --publish=never
+        shell: cmd
+
+      - name: Build Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          NODE_ENV=production npm run build:exe -- --publish=never
+
+      # ✅ Upload artifacts (OS-specific)
       - name: Upload Windows artifacts
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
@@ -44,7 +80,6 @@ jobs:
             dist/**/*.exe
             dist/**/*.zip
 
-      # ✅ Upload Linux artifacts
       - name: Upload Linux artifacts
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
