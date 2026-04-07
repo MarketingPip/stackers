@@ -35,6 +35,7 @@ const defaultSettings = {
   grid_columns: 7,
   major_prize_row: 0,
   minor_prize_row: 4,
+  sfx_path: "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004"
 };
 
 // emit events from nodejs back to HTML
