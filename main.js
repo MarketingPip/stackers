@@ -3,8 +3,7 @@ const path = require('path');
 const fs = require('fs');
 let mainWindow;
 
-// Path to the settings file
-const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
+const USER_DATA_PATH = app.getPath('userData');
 
 // Default settings
 const defaultSettings = {
@@ -14,6 +13,7 @@ const defaultSettings = {
   rotation: false,
 };
 
+// emit events from nodejs back to HTML
 function emit(method, ...args){
   mainWindow.webContents.send(method, args);
 }
@@ -56,34 +56,43 @@ async function createWindow() {
   }
 }
 
-// Function to check if the settings file exists, and create it if not
+
+// Helper to resolve paths to the userData folder safely
+function getSafePath(fileName) {
+  return path.join(USER_DATA_PATH, fileName);
+}
 function ensureSettingsFile() {
-  if (!fs.existsSync(settingsFilePath)) {
-    // Write the default settings to the file
-    fs.writeFileSync(settingsFilePath, JSON.stringify(defaultSettings, null, 2));
-    console.log('Settings file created with default settings.');
+  const settingsPath = getSafePath('settings.json');
+  if (!fs.existsSync(settingsPath)) {
+    fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
+    console.log('Settings file created at:', settingsPath);
   }
 }
 
-// Handle IPC request for writing to file
-ipcMain.handle('write-to-file', (event, filePath, content) => {
-  fs.writeFileSync(filePath, content);
-  return `File written to ${filePath}`;
+// --- IPC HANDLERS ---
+
+// Modified to automatically use the userData path
+ipcMain.handle('write-to-file', (event, fileName, content) => {
+  const fullPath = getSafePath(fileName);
+  fs.writeFileSync(fullPath, content);
+  return `File written to ${fullPath}`;
 });
 
-
-ipcMain.handle('read-from-file', (event, filePath) => {
+ipcMain.handle('read-from-file', (event, fileName) => {
   try {
-    const data = fs.readFileSync(filePath, 'utf-8');
-    if(filePath.endsWith(".json")){
-        return JSON.parse(data);  // Assuming the file contains JSON data
-    };
-   return data;
+    const fullPath = getSafePath(fileName);
+    const data = fs.readFileSync(fullPath, 'utf-8');
+    
+    if (fileName.endsWith(".json")) {
+      return JSON.parse(data);
+    }
+    return data;
   } catch (error) {
     console.error('Error reading file:', error);
     return { error: 'Error reading file' };
   }
 });
+
 
 // Wrap app startup in try/catch
 app.whenReady()
