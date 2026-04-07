@@ -44,6 +44,17 @@ Check the `/hardware` folder for the `.ino` sketch to flash to your Arduino.
 2. Extract the ZIP.
 3. Run `OpenStacker.exe` (Windows) or `./OpenStacker` (Linux).
 
+
+### Download Sound Effects (Optional)
+
+> Notice: Sound effects are not included in the repository as they are copyrighted material. You must run the included script to download them to your local directory for the game to have audio.
+
+Windows: Right-click setup_sfx.sh and select Run with PowerShell.
+
+macOS / Linux: Open a terminal in the folder and run: sh setup_sfx.sh
+
+Edit your settings config to use your local path. 
+
 ### Web / Self-Hosting
 Simply host the contents of the `/dist` folder on any web server (GitHub Pages, Netlify, etc.) or open `index.html` in your browser.
 
