@@ -1,4 +1,16 @@
-import defaultSettings from "./settings.js";
+const defaultSettings = {
+  sound_enabled: true,
+  highscore: 0,
+  fullscreen: false, // Sync default with launch flag
+  free_play: false, // if free play is true - do not show insert credits message. 
+  rotation: false,
+  grid_rows: 15,
+  grid_columns: 7,
+  major_prize_row: 0,
+  minor_prize_row: 4,
+  sfx_path: "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004",
+  electron_menu_bar: true, // set to false for debugging.
+};
 
 window.addEventListener('DOMContentLoaded', async () => { 
 
@@ -309,6 +321,7 @@ const HIGHSCORE = await getHighscore();
 class Stacker {
   constructor() {
     this.state = STATE.ATTRACT;
+    this.pauseActions = false;
     this.board = [];
     this.pos = {x:0, y:ROWS-1};
     this.dir = "r";
@@ -382,15 +395,19 @@ class Stacker {
   
     cv.addEventListener(
       "touchstart",
-      async (e) => {
+       (e) => {
         e.preventDefault();
-        await this._action(e);
+        this._action(e);
       },
       { passive: false }
     );
   }
   
   async _action(e) {
+    
+    if(this.pauseActions === true){
+     return;
+    }
     if (this.state === STATE.ATTRACT) {
       if (this.credits > 0) {
         this.credits--;
@@ -414,10 +431,13 @@ class Stacker {
   async _startGame() {
     // if (this.state === STATE.STARTING) return;
     //this.state = STATE.STARTING;
+    this.pauseActions = true;
     const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
+    
     sfx.stopAll();
     sfx.play("start")
-    await delay(5000)
+    await delay(5000);
+    this.pauseActions = false;
     fireEvent("start");
     this._resetBoard();
     this.pos = {x: rand(0, COLS-1), y: ROWS-1};
