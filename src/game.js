@@ -642,6 +642,9 @@ class Stacker {
   // ── Playing update ───────────────────────────────────────────
   _updatePlaying(dt) {
     const g = this;
+   if(!g.hasVoiceLinePlayed){
+    g.hasVoiceLinePlayed = {'vo_lastBlock':false, 'vo_careful':false};
+   }
     if (g.placeTime === 0) {
       if (g.mvTm === 0) {
         if      (g.dir==="r") { g.pos.x++; if (g.pos.x >= COLS-1)         g.dir="l"; }
@@ -654,8 +657,14 @@ class Stacker {
         }
         g.mvTm = g.moveInterval;
         // voice lines at key rows
-        if (g.pos.y === 6)  sfx.play("vo_lastBlock");
-        if (g.pos.y === 10) sfx.play("vo_careful");
+        if (g.pos.y === 14 && !g.hasVoiceLinePlayed['vo_lastBlock']){          //sfx.play("vo_lastBlock");
+                                                    g.hasVoiceLinePlayed['vo_lastBlock'] = true;
+         }
+        
+        if (g.pos.y === 10 && !g.hasVoiceLinePlayed['vo_careful']){   //sfx.play("vo_careful");
+                                                                   g.hasVoiceLinePlayed['careful'] = true;
+              }
+        
       } else {
         g.mvTm = Math.max(0, g.mvTm - dt);
       }
@@ -696,6 +705,7 @@ class Stacker {
   // ── Gameover update ──────────────────────────────────────────
   _updateGameover(dt) {
     const g = this;
+    g.hasVoiceLinePlayed = {1:false, 2:false};
     if (g.endTime > 0) {
       g.endTime -= dt;
       for (let go=0; go<g.loseTmSt/g.loseInt; go++) {
