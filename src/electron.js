@@ -90,11 +90,49 @@ function getSafePath(fileName) {
   return path.join(USER_DATA_PATH, fileName);
 }
 
+function mergeMissingKeys(defaultObj, existingObj) {
+  for (const key in defaultObj) {
+    if (
+      typeof defaultObj[key] === 'object' &&
+      defaultObj[key] !== null &&
+      !Array.isArray(defaultObj[key])
+    ) {
+      // Ensure nested object exists
+      if (!existingObj[key]) {
+        existingObj[key] = {};
+      }
+      mergeMissingKeys(defaultObj[key], existingObj[key]);
+    } else {
+      // Add missing key
+      if (!(key in existingObj)) {
+        existingObj[key] = defaultObj[key];
+      }
+    }
+  }
+  return existingObj;
+}
+
 function ensureSettingsFile() {
   const settingsPath = getSafePath('settings.json');
+
   if (!fs.existsSync(settingsPath)) {
     fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
     console.log('Settings file created at:', settingsPath);
+    return;
+  }
+
+  try {
+    const existingData = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+
+    const merged = mergeMissingKeys(defaultSettings, existingData);
+
+    fs.writeFileSync(settingsPath, JSON.stringify(merged, null, 2));
+    console.log('Settings file updated with missing keys (if any)');
+  } catch (err) {
+    console.error('Failed to read/merge settings, recreating file:', err);
+
+    // fallback: recreate file if corrupted
+    fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
   }
 }
 
