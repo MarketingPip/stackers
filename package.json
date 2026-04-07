@@ -26,6 +26,7 @@
         "files": [
             "dist/game.html",
             "src/electron.js",
+            "src/settings.js",
             "preload.js",
             "package.json"
         ],    
