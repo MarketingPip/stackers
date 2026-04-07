@@ -172,31 +172,67 @@ class SoundManager {
     this._cache = {};
     this._current = null;
   }
+
+  /**
+   * New: Preloads every sound defined in the SFX_MAP.
+   * Call this once during your app's initialization.
+   */
+  preloadAll() {
+    if (!SOUND_ENABLED) return;
+    
+    console.log("Preloading all sound effects...");
+    
+    Object.keys(SFX_MAP).forEach(key => {
+      this._load(key);
+    });
+  }
+
   _load(key) {
-    console.log(SFX_PATH + encodeURI(SFX_MAP[key]))
     if (!SOUND_ENABLED) return null;
+
     if (!this._cache[key]) {
-      const a = new Audio(SFX_PATH + encodeURI(SFX_MAP[key]));
+      // Construct the full path
+      const path = SFX_PATH + encodeURI(SFX_MAP[key]);
+      
+      const a = new Audio(path);
       a.preload = "auto";
+      
+      // For small sound effects, this helps ensure the browser 
+      // actually fetches the data immediately
+      a.load(); 
+
       this._cache[key] = a;
     }
     return this._cache[key];
   }
-  play(key, loop=false) {
+
+  play(key, loop = false) {
     if (!SOUND_ENABLED) return;
+    
     const a = this._load(key);
     if (!a) return;
-    a.loop = loop;
+
+    // If it's already playing, we reset it to the start
     a.currentTime = 0;
-    a.play().catch(()=>{});
+    a.loop = loop;
+    
+    // play() returns a promise; we catch errors (like autoplay blocks)
+    a.play().catch(e => console.warn(`Playback failed for ${key}:`, e));
   }
+
   stop(key) {
-    if (!SOUND_ENABLED) return;
     const a = this._cache[key];
-    if (a) { a.pause(); a.currentTime = 0; }
+    if (a) { 
+      a.pause(); 
+      a.currentTime = 0; 
+    }
   }
+
   stopAll() {
-    Object.values(this._cache).forEach(a => { a.pause(); a.currentTime = 0; });
+    Object.values(this._cache).forEach(a => { 
+      a.pause(); 
+      a.currentTime = 0; 
+    });
   }
 }
 
@@ -299,7 +335,7 @@ ctx.scale(DPR, DPR);
 let BOARD_TOP = 80; // px offset for header
 
 const sfx = new SoundManager();
-
+sfx.preloadAll(); // preload all sounds. 
 // ── Prizes config ─────────────────────────────────────────────
 const PRIZES = [
   { label:"MAJOR PRIZE", color:"#4af", row:0  },
