@@ -405,8 +405,8 @@ class Stacker {
     this.board = [];
     this.pos = {x:0, y:ROWS-1};
     this.dir = "r";
-    this.rowLen = 3;
-    this.moveInterval = 1;
+    this.rowLen = 3; // (user can set blocks to start with here via settings)
+    this.moveInterval = 100;
     this.mvTm = 0;
     this.placeTime = 0;
     this.plcInt = 250;
@@ -499,8 +499,8 @@ class Stacker {
     this._resetBoard();
     this.pos = {x: rand(0, COLS-1), y: ROWS-1};
     this.dir = this.pos.x >= COLS-1 ? "l" : "r";
-    this.rowLen = 3;
-    this.moveInterval *= 1; //0.92;
+    // this.rowLen = 3;
+    this.moveInterval *= 1; //0.92; (user can set here via settings)
     this.mvTm = 0;
     this.placeTime = 0;
     this.blocksDropped = [];
