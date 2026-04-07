@@ -31,6 +31,10 @@ const defaultSettings = {
   fullscreen: isArcadeMode, // Sync default with launch flag
   free_play: false, // if free play is true - do not show insert credits message. 
   rotation: false,
+  grid_rows: 15,
+  grid_columns: 7,
+  major_prize_row: 0,
+  minor_prize_row: 4,
 };
 
 // emit events from nodejs back to HTML
