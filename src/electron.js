@@ -90,7 +90,7 @@ async function createWindow() {
     });
   } catch (err) {
     console.error('Failed to create window or load file:', err);
-    app.quit();
+   // app.quit();
   }
 }
 
