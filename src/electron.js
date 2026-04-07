@@ -70,7 +70,7 @@ async function createWindow() {
       webPreferences: {
         contextIsolation: true,
         sandbox: true,
-        preload: path.join(__dirname, 'preload.js'), 
+        preload: path.join(__dirname, '..', 'preload.js'),
       },
     });
 
@@ -82,7 +82,7 @@ async function createWindow() {
       }
     });
 
-    const indexPath = path.join(__dirname, 'dist', 'game.html') 
+    const indexPath = const indexPath = path.join(__dirname, '..', 'dist', 'game.html'); 
     await mainWindow.loadFile(indexPath);
 
     mainWindow.on('closed', () => {
