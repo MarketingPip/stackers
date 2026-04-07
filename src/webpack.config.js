@@ -9,7 +9,7 @@ module.exports = {
   entry: './src/game.js',
 
   output: {
-    path: path.resolve(__dirname, 'src'),
+    path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js', // This will be inlined and won't exist as a separate file in dist
     clean: true,
   },
@@ -30,7 +30,7 @@ module.exports = {
 
   plugins: [
     new HtmlWebpackPlugin({
-      template: './src/_game.html',
+      template: './src/game.html',
       inject: 'body', // Ensures script is placed in the body for the inliner to find it
     }),
     // Order matters: Inline CSS usually works best before or during the HTML script inlining
