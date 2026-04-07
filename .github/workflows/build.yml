@@ -25,7 +25,8 @@ jobs:
 
       # ✅ Use lockfile instead of reinstalling everything manually
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+        #run: npm ci
 
       # ✅ Build (cross-platform safe)
       - name: Build app
