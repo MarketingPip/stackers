@@ -65,7 +65,7 @@ async function createWindow() {
       height: 1000,
       backgroundColor: '#000000',
       fullscreen: isArcadeMode,    // Start in fullscreen if requested
-      autoHideMenuBar: true,       // Native look for Arcade cabinets
+      autoHideMenuBar: false,       // Native look for Arcade cabinets
       alwaysOnTop: isArcadeMode,   // Keeps focus in arcade environments
       webPreferences: {
         contextIsolation: true,
