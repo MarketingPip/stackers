@@ -15,7 +15,7 @@ const defaultSettings = {
 
 // emit events from nodejs back to HTML
 function emit(method, ...args){
-  mainWindow.webContents.send(method, args);
+  mainWindow.webContents.send(method, ...args);
 }
 
 app.disableHardwareAcceleration();
