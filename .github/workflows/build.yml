@@ -38,6 +38,7 @@ jobs:
             tailwindcss ^
             autoprefixer ^
             html-inline-script-webpack-plugin ^
+            html-inline-css-webpack-plugin ^
             html-loader
         shell: cmd
         if: matrix.os == 'windows-latest'
@@ -56,6 +57,8 @@ jobs:
             postcss-loader \
             tailwindcss \
             autoprefixer \
+            html-inline-css-webpack-plugin \
+            html-inline-script-webpack-plugin \
             html-loader
         if: matrix.os == 'ubuntu-latest'
 
