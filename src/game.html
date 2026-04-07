@@ -406,7 +406,7 @@ class Stacker {
     this.pos = {x:0, y:ROWS-1};
     this.dir = "r";
     this.rowLen = 3;
-    this.moveInterval = 100;
+    this.moveInterval = 1;
     this.mvTm = 0;
     this.placeTime = 0;
     this.plcInt = 250;
@@ -500,7 +500,7 @@ class Stacker {
     this.pos = {x: rand(0, COLS-1), y: ROWS-1};
     this.dir = this.pos.x >= COLS-1 ? "l" : "r";
     this.rowLen = 3;
-    this.moveInterval = 100;
+    this.moveInterval *= 1; //0.92;
     this.mvTm = 0;
     this.placeTime = 0;
     this.blocksDropped = [];
@@ -1006,7 +1006,7 @@ class Stacker {
 
   // ── Gameover overlay ──────────────────────────────────────────
   _drawGameoverOverlay() {
-    if (this.g_endTime > 0) return; // still animating
+    if (this.endTime > 0) return;
     // only show after board clear
     if (this.state !== STATE.BOARDCLEAR && this.endTime === 0 && this.brdClrTm === 0) {
       ctx.fillStyle = "rgba(0,0,20,0.7)";
