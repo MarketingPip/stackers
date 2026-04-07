@@ -49,12 +49,12 @@ app.disableHardwareAcceleration();
 // Catch any uncaught errors in the main process
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
-  app.quit();
+  //app.quit();
 });
 
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled Rejection:', reason);
-  app.quit();
+  //app.quit();
 });
 
 // Function to create the window
