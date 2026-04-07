@@ -144,7 +144,7 @@ const SETTINGS =  isElectron
 // ── Sound config ─────────────────────────────────────────────
 // Set SOUND_ENABLED = true and place MP3s in ./sfx/ to use real audio.
 // File names match the arcade asset list exactly.
-const SOUND_ENABLED = SETTINGS.sound;
+const SOUND_ENABLED = SETTINGS.sound_enabled;
 const SFX_PATH = "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004"; 
 const SFX_MAP = {
   attract:      "/tbzuxdbx/006. Music - Attract mode music.mp3",
@@ -178,6 +178,8 @@ class SoundManager {
    * Call this once during your app's initialization.
    */
   preloadAll() {
+    
+    console.log(SOUND_ENABLED)
     if (!SOUND_ENABLED) return;
     
     console.log("Preloading all sound effects...");
@@ -854,7 +856,7 @@ class Stacker {
       ctx.fillStyle = "#4af";
       ctx.fillText("MAJOR PRIZE", CW/2, CH/2-40);
       ctx.fillStyle = "#fff";
-      ctx.font = "11px 'Courier New'";
+      ctx.font = "11px 'Courier New'";  
       ctx.fillText("Reach the TOP row perfectly", CW/2, CH/2-18);
       ctx.fillStyle = "#ff4";
       ctx.font = "bold 15px 'Courier New'";
@@ -1172,5 +1174,6 @@ fsBtn.onclick = () => {
 };  
   </script>
   
-</body>
+</body> 
 </html> 
+ 
