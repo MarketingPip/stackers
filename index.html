@@ -135,18 +135,18 @@ if (navigator.userAgent.toLowerCase().includes(' electron/') || typeof process !
 // ── Sound config ─────────────────────────────────────────────
 // Set SOUND_ENABLED = true and place MP3s in ./sfx/ to use real audio.
 // File names match the arcade asset list exactly.
-const SOUND_ENABLED = false;
-const SFX_PATH = "./sfx/";
+const SOUND_ENABLED = true;
+const SFX_PATH = "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004"; 
 const SFX_MAP = {
-  attract:      "Music - Attract mode music.mp3",
-  start:        "SFX - Start up.mp3",
-  place:        "SFX - Button.mp3",
-  blockFall:    "SFX - Block Fall.mp3",
-  miss:         "SFX - Buzz.mp3",
+  attract:      "/tbzuxdbx/006. Music - Attract mode music.mp3",
+  start:        "/vaqewwrs/061. SFX - Start up.mp3",
+  place:        "/nnzjymsd/046. SFX - Button.mp3", 
+  blockFall:    "/lpqkdlwa/045. SFX - Block Fall.mp3",
+  miss:         "/lxeeietj/047. SFX - Buzz.mp3",
   minorPrize:   "SFX - Minor prize win.mp3",
   majorPrize:   "SFX - Major prize win.mp3",
-  gameOver:     "SFX - Game over.mp3",
-  coin:         "SFX - Insert coin.mp3",
+  gameOver:     "/faldlrbg/053. SFX - Game over.mp3",
+  coin:         "/ecymndbz/054. SFX - Insert coin.mp3",
   tick:         "SFX - Tick tock (Loop).mp3",
   vo_careful:   "Voice - Careful.mp3",
   vo_getTop:    "Voice - Get to the top.mp3",
@@ -154,19 +154,20 @@ const SFX_MAP = {
   vo_buildUp:   "Voice - Build them up.mp3",
   vo_excellent: "Voice - Excellent.mp3",
   vo_wow:       "Voice - Wow jackpot prize winner.mp3",
-  vo_ohNo:      "Voice - Oh no, game over.mp3",
+  vo_ohNo:      "/joqnrtus/084. Voice - Oh no, game over.mp3",
   vo_stacker:   "Voice - Stacker!!!.mp3",
-};
-
+}; 
+  
 class SoundManager {
   constructor() {
     this._cache = {};
     this._current = null;
   }
   _load(key) {
+    console.log(SFX_PATH + encodeURI(SFX_MAP[key]))
     if (!SOUND_ENABLED) return null;
     if (!this._cache[key]) {
-      const a = new Audio(SFX_PATH + SFX_MAP[key]);
+      const a = new Audio(SFX_PATH + encodeURI(SFX_MAP[key]));
       a.preload = "auto";
       this._cache[key] = a;
     }
@@ -382,7 +383,7 @@ class Stacker {
     this.attractBlink = 0;
     this.score = 0;
     this.highScore = HIGHSCORE;
-    this.credits = 1; // start with 1 credit for demo; hook coin mech via INSERT_COIN
+    this.credits = 0; // hook coin mech via INSERT_COIN
     this.mvTmDec = 5;
     this.flashMsg = "";
     this.flashTm = 0;
@@ -429,7 +430,7 @@ class Stacker {
         this._flash("INSERT COIN  [C KEY]");
       }
       return;
-    }
+    } 
     if (this.state === STATE.PLAYING) {
       this._placeRow(e);
       return;
@@ -441,10 +442,11 @@ class Stacker {
   }
 
   // ── Game start ───────────────────────────────────────────────
-  _startGame() {
+  async _startGame() {
+    const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
     sfx.stopAll();
-    sfx.play("coin");
-    setTimeout(()=>sfx.play("start"),200);
+    sfx.play("start")
+    await delay(5000)
     fireEvent("start");
     this._resetBoard();
     this.pos = {x: rand(0, COLS-1), y: ROWS-1};
@@ -759,7 +761,9 @@ class Stacker {
     this._drawCRT();
 
     // Board clear runs even in gameover state
-    if (this.state === STATE.BOARDCLEAR) this._updateBoardClear(16);
+    if (this.state === STATE.BOARDCLEAR)
+       
+      this._updateBoardClear(16);
   }
 
   // ── Attract screen ───────────────────────────────────────────
@@ -1123,4 +1127,4 @@ fsBtn.onclick = () => {
   </script>
   
 </body>
-</html>
+</html> 
