@@ -331,7 +331,7 @@ class Particle {
 
 async function getHighscore(){
   if(isElectron){
-   console.log(await window.electron.electronBridge('call', ['read-from-file', 'settings.json']).highscores);
+   console.log(await window.electronBridge('call', ['read-from-file', 'settings.json']).highscores);
   }
   return await StorageManager.get("stacker_hs") || 0;
 }  
