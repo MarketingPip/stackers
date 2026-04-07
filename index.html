@@ -127,7 +127,7 @@ body {
 // ═══════════════════════════════════════════════════════════════
 
 let isElectron = false;  
-if (navigator.userAgent.toLowerCase().includes(' electron/')) {
+if (navigator.userAgent.toLowerCase().includes(' electron/') || typeof process !== 'undefined' && process.versions && process.versions.electron) {
     isElectron = true;
 };
 
