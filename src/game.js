@@ -141,7 +141,7 @@ class SoundManager {
     
     // play() returns a promise; we catch errors (like autoplay blocks)
     a.play().catch(e => console.warn(`Playback failed for ${key}:`, e));
-  }
+  } 
 
   stop(key) {
     const a = this._cache[key];
@@ -455,6 +455,20 @@ class Stacker {
     this.pauseActions = true;
     const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
     sfx.stopAll();
+    
+    
+if(!this.countDownTimer){
+    this.countDownTimer = 5;
+  }
+const timer = setInterval(() => {
+  this.countDownTimer--;
+
+  if (this.countDownTimer < 0) {
+    clearInterval(timer);
+    console.log('Countdown finished!');
+  }
+}, 1000);
+    
     sfx.play("place")
     sfx.play("start")
     await delay(5000);
@@ -1134,6 +1148,8 @@ if (d && d.cells) {
     ctx.fillStyle = "#4af";
     ctx.fillText("★  ARCADE EDITION  ★", CW/2, logoY+28);
  
+    
+    if (this.attractBlink && this.pauseActions != true) {
     // prize display phases
     ctx.font = "bold 15px 'Courier New'";
     if (this.attractPhase === 0) {
@@ -1160,7 +1176,12 @@ if (d && d.cells) {
       ctx.font = "bold 28px 'Courier New'";
       ctx.fillText(String(this.highScore).padStart(6,"0"), CW/2, CH/2+16);
     }
-
+      
+      
+      
+   }
+    
+    
     // blink insert/press
     if (this.attractBlink && this.pauseActions != true) {
       ctx.font = "bold 14px 'Courier New'";
@@ -1171,12 +1192,26 @@ if (d && d.cells) {
     } 
      
      if (this.attractBlink && this.pauseActions === true) {
+       
+       
         ctx.font = "bold 14px 'Courier New'";
       ctx.fillStyle = "#fff";
       const msg = "GET READY";
       ctx.fillStyle =  "#fa4";
       ctx.fillText(msg, CW/2, CH-30);
      }
+    
+    if (this.pauseActions === true) {
+      
+       ctx.fillStyle = "#4af";
+      ctx.fillText("COUNTDOWN", CW/2, CH/2-20);
+      ctx.fillStyle = "#ff4";
+      ctx.font = "bold 28px 'Courier New'";
+      ctx.fillText(this.countDownTimer, CW/2, CH/2+16);
+      
+      
+      
+    }
 
     ctx.font = "11px 'Courier New'";
     ctx.fillStyle = "#4af6";
