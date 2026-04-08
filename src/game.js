@@ -1596,13 +1596,7 @@ function fitToScreen() {
   cv.style.width = `${CW * scale}px`;
   cv.style.height = `${CH * scale}px`;
  
-  // Optional rotation
-  if (rotated) {
-    cv.style.transform = "rotate(90deg)";
-    cv.style.transformOrigin = "center center";
-  } else {
-    cv.style.transform = "none";
-  }
+ 
 
   // Keep canvas in normal flow
   cv.style.position = "relative";
@@ -1643,13 +1637,22 @@ devBtn.onclick = () => {
 
 rotateBtn.onclick = () => {
   rotated = !rotated;
-
-  const current = cv.style.transform.replace(/rotate\([^)]+\)/, "");
-
+const side = document.getElementById('side');
+  const wrap = document.getElementById('wrap');
+  // Optional rotation
   if (rotated) {
-    cv.style.transform = current + " rotate(90deg)";
+    cv.style.transform = "rotate(90deg)";
+    cv.style.transformOrigin = "center center";
+    side.classList.add("hidden")
+     devBtn.classList.add("hidden")
+    //side.style.transform = "rotate(90deg)";
+   // side.style.transformOrigin = "center center";
+    //wrap.style["align-items"] = "flex-end";
   } else {
-    cv.style.transform = current;
+    devBtn.classList.remove("hidden")
+    cv.style.transform = "none";
+   // wrap.style["align-items"] = "flex-start";
+    side.classList.remove("hidden")
   }
 };
 
