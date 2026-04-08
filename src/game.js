@@ -78,14 +78,19 @@ const SFX_MAP = {
   tick:         "/rewtdmar/062. SFX - Tick tock (Loop).mp3",
   vo_careful:   "/pakwefph/066. Voice - Careful.mp3",
   vo_getTop:    "/ogrotdig/075. Voice - Get to the top.mp3",
+  vo_takeMeToTop:    "/qadrwkku/099. Voice - Take me to the top.mp3",
   vo_lastBlock: "/tjqcpssj/100. Voice - This is the last block.mp3",
   vo_buildUp:   "/xxvltjnq/065. Voice - Build them up.mp3",
   vo_excellent: "/efoedfoe/072. Voice - Excellent.mp3",
   vo_wow:       "/gvjjrghq/110. Voice - Wow jackpot prize winner.mp3",
   vo_ohNo:      "/joqnrtus/084. Voice - Oh no, game over.mp3",
   vo_stacker:   "/oruvwteo/095. Voice - Stacker!!!.mp3",
+  vo_stackerrr:   "/jbijvbtr/096. Voice - Stacker... rrrr.mp3",
   vo_comePlay: "/ddfugvjk/068. Voice - Come on, play stacker.mp3",
-  vo_comeOn: "/sqbiosav/067. Voice - Come on, give me your best shot.mp3"
+  vo_comeOn: "/sqbiosav/067. Voice - Come on, give me your best shot.mp3",
+  vo_bet: "/bnmvqros/077. Voice - I bet you can build me to the top.mp3",
+  vo_bet2: "/dkrbinpl/083. Voice - Oh bet you can stack the blocks.mp3",
+  vo_whoCanStackMe: "/klbwgqlj/105. Voice - Who can stack me to the top.mp3"
 }; 
   
 class SoundManager {
@@ -459,13 +464,13 @@ class Stacker {
     
 if(!this.countDownTimer){
     this.countDownTimer = 5;
-  }
+  } 
 const timer = setInterval(() => {
   this.countDownTimer--;
-
+ 
   if (this.countDownTimer < 0) {
     clearInterval(timer);
-    console.log('Countdown finished!');
+    this.countDownTimer = 5;
   }
 }, 1000);
     
@@ -915,7 +920,7 @@ _simulatePlay(dt) {
     
     if(this.attractTimer.elapsed() >= 40037){
 
-      sfx.play(["vo_comePlay","vo_stacker","vo_comeOn"][Math.floor(Math.random()*3)]);
+      sfx.play(["vo_comePlay","vo_stacker","vo_comeOn", "vo_bet", "vo_takeMeToTop", "vo_stackerrr", "vo_whoCanStackMe"][Math.floor(Math.random()*3)]);
       
       this.attractTimer.reset()
     }
@@ -1149,7 +1154,7 @@ if (d && d.cells) {
     ctx.fillText("★  ARCADE EDITION  ★", CW/2, logoY+28);
  
     
-    if (this.attractBlink && this.pauseActions != true) {
+    if (this.pauseActions != true) {
     // prize display phases
     ctx.font = "bold 15px 'Courier New'";
     if (this.attractPhase === 0) {
@@ -1219,7 +1224,7 @@ if (d && d.cells) {
 
     ctx.restore();
   }
-
+ 
   // ── Header ───────────────────────────────────────────────────
   _drawHeader() {
     ctx.textAlign = "left";
