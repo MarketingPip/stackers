@@ -508,6 +508,9 @@ class Stacker {
       }
       g.tmpDropped.sort((a,b)=>b.gap-a.gap);
       g.rowLen -= missed;
+      if(g.rowLen != 0 && missed != 0){
+        sfx.play("blockFall");
+      }
     }
 
     fireEvent("place", { row: g.pos.y, rowLen: g.rowLen, missed });
