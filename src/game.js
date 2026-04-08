@@ -454,8 +454,8 @@ class Stacker {
     //this.state = STATE.STARTING;
     this.pauseActions = true;
     const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
-    
     sfx.stopAll();
+    sfx.play("place")
     sfx.play("start")
     await delay(5000);
     this.pauseActions = false;
@@ -507,7 +507,10 @@ class Stacker {
         }
       }
       g.tmpDropped.sort((a,b)=>b.gap-a.gap);
+      //const maxGap = (ROWS-1) - g.pos.y;
+
       g.rowLen -= missed;
+       
       if(g.rowLen != 0 && missed != 0){
         sfx.play("blockFall");
       }
@@ -591,7 +594,269 @@ class Stacker {
   }
 
   
-  
+
+
+// ── _resetDemo ───────────────────────────────────────────────────────────────
+_resetDemo() {
+  this._resetBoard();
+
+  this.demo = {
+    // Board state for the demo (separate from this.board to avoid conflicts
+    // with the animated background in _drawAttract)
+    cells: Array.from({ length: ROWS }, () => Array(COLS).fill(0)),
+
+    x: 0,            // left edge of moving strip
+    y: ROWS - 1,     // current row (top = 0, bottom = ROWS-1)
+    dir: "r",
+    rowLen: 3,
+
+    moveInterval: 100,   // ms between steps – speeds up each row
+    mvTm: 100,           // countdown to next step
+
+    phase: "moving",     // "moving" | "falling" | "blinking" | "pausing"
+    pauseTm: 0,
+
+    // Falling blocks after a miss
+    fallers: [],         // [{x, y (float)}]
+    fallTm: 0,
+
+    // Blink after placement
+    blinkTm: 0,
+    blinkCount: 0,
+    blinkRow: -1,
+    blinkRowSnapshot: [],// which cols were lit when we placed
+
+    // AI press flag – set true for one tick when the AI decides to press
+    pressedThisTick: false,
+    // small cooldown so AI doesn't press every single tick
+    pressCooldown: 0,
+  };
+
+  // Paint the initial strip position
+  this._demoPaint();
+}
+
+// ── _demoPaint  (internal helper) ────────────────────────────────────────────
+_demoPaint() {
+  const d = this.demo;
+  if (!d || !d.cells || d.y < 0 || d.y >= ROWS) return;
+  // Clear the active row
+  for (let x = 0; x < COLS; x++) d.cells[d.y][x] = 0;
+  // Paint strip
+  for (let i = 0; i < d.rowLen; i++) {
+    const x = d.x + i;
+    if (x >= 0 && x < COLS) d.cells[d.y][x] = 1;
+  }
+}
+
+// ── _demoPlaceRow ─────────────────────────────────────────────────────────────
+_demoPlaceRow() {
+  const d = this.demo;
+  if (d.phase !== "moving") return;  // don't double-place
+
+  let missed = 0;
+  const fallers = [];
+if (d.cells[d.y]) {
+  if (d.y < ROWS - 1) {
+    for (let x = 0; x < COLS; x++) {
+      if (d.cells[d.y][x] === 1 && d.cells[d.y + 1][x] !== 1) {
+        d.cells[d.y][x] = 0;
+        fallers.push({ x, y: d.y + 0.0 }); // float y for animation
+        missed++;
+      }
+    }
+  }
+    d.rowLen -= missed;
+  }
+ 
+  // Clamp overhangs
+  const lo = Math.max(0, -d.x);
+  const ro = Math.max(0, (d.x + d.rowLen) - COLS);
+  d.rowLen -= (lo + ro);
+
+  // Real-game breakpoints
+  const bps = [[12, 2], [6, 1]];
+  for (const [row, maxLen] of bps) {
+    if (d.y === row && d.rowLen > maxLen) d.rowLen = maxLen;
+  }
+
+  if (d.rowLen <= 0) {
+    // Lost – restart after a pause
+    d.phase = "pausing";
+    d.pauseTm = 1500;
+    return;
+  }
+
+  if (fallers.length > 0) {
+    d.fallers = fallers;
+    d.fallTm  = 55;
+    d.phase   = "falling";
+  } else {
+    // Perfect placement – start blink then advance
+    d.blinkRow          = d.y;
+    d.blinkRowSnapshot  = [...d.cells[d.y]];
+    d.blinkCount        = 6;
+    d.blinkTm           = 100;
+    d.phase             = "blinking";
+  }
+}
+
+// ── _advanceDemoRow (internal) ────────────────────────────────────────────────
+_advanceDemoRow() {
+  const d = this.demo;
+  const prevY = d.y;
+  d.y--;
+
+  if (d.y < 0 || d.y >= ROWS) {
+    // Reached the top – win animation then restart
+    d.phase   = "pausing";
+    d.pauseTm = 2000;
+    return;
+  }
+
+  // Speed up slightly each row
+  d.moveInterval = Math.max(30, d.moveInterval - 5);
+  d.mvTm         = d.moveInterval;
+
+  // New random start position
+  d.x = rand(0, COLS - 1);
+  if (d.x + d.rowLen - 1 >= COLS - 1) d.dir = "l";
+  else if (d.x <= 0)                   d.dir = "r";
+
+  // Short pause before strip starts moving on the new row
+  d.phase   = "pausing";
+  d.pauseTm = 220 + (d.fallers.length > 0 ? 300 : 0);
+  d.fallers = [];
+
+  d._afterPause = "moving";
+
+  d.blinkRow = -1;
+
+  this._demoPaint();
+}
+
+// ── _simulatePlay ─────────────────────────────────────────────────────────────
+_simulatePlay(dt) {
+  if (!this.demo) { this._resetDemo(); return; }
+  const d = this.demo;
+
+  // ── PHASE: pausing ──────────────────────────────────────────────────────────
+  if (d.phase === "pausing") {
+    d.pauseTm -= dt;
+    if (d.pauseTm <= 0) {
+      if (d.rowLen <= 0) {
+        // Restart the whole demo
+        this._resetDemo();
+      } else {
+        d.phase = d._afterPause || "moving";
+        d._afterPause = null;
+      }
+    }
+    return;
+  }
+
+  // ── PHASE: falling (missed blocks drop to the floor) ───────────────────────
+  if (d.phase === "falling") {
+    d.fallTm -= dt;
+    if (d.fallTm <= 0) {
+      d.fallTm = 55;
+      let allDone = true;
+      for (const fb of d.fallers) {
+        // Erase old cell
+        const oy = Math.floor(fb.y);
+        if (oy >= 0 && oy < ROWS) d.cells[oy][fb.x] = 0;
+        fb.y += 1;
+        const ny = Math.floor(fb.y);
+        if (ny < ROWS) {
+          d.cells[ny][fb.x] = 1;
+          allDone = false;
+        }
+      }
+      if (allDone) {
+        // After fall, blink the placed row then advance
+        if (d.blinkRow === -1) d.blinkRow = d.y; // shouldn't happen but safety
+        d.blinkRowSnapshot = [...d.cells[d.y]];
+        d.blinkCount = 4;
+        d.blinkTm    = 100;
+        d.phase      = "blinking";
+      }
+    }
+    return;
+  }
+
+  // ── PHASE: blinking (placed row flashes before moving up) ──────────────────
+  if (d.phase === "blinking") {
+    d.blinkTm -= dt;
+    if (d.blinkTm <= 0) {
+      d.blinkTm = 100;
+      d.blinkCount--;
+      const lit = d.blinkCount % 2 === 0;
+      const row = d.blinkRow >= 0 ? d.blinkRow : d.y;
+      for (let x = 0; x < COLS; x++) {
+        d.cells[row][x] = lit ? d.blinkRowSnapshot[x] : 0;
+      }
+      if (d.blinkCount <= 0) {
+        // Restore fully lit then advance
+        for (let x = 0; x < COLS; x++) d.cells[row][x] = d.blinkRowSnapshot[x];
+        this._advanceDemoRow();
+      }
+    }
+    return;
+  }
+
+  // ── PHASE: moving ───────────────────────────────────────────────────────────
+  if (d.phase === "moving") {
+    if (d.pressCooldown > 0) d.pressCooldown -= dt;
+
+    d.mvTm -= dt;
+    if (d.mvTm <= 0) {
+      d.mvTm = d.moveInterval;
+
+      // Move strip
+      if (d.dir === "r") {
+        d.x++;
+        if (d.x + d.rowLen - 1 >= COLS - 1) d.dir = "l";
+      } else {
+        d.x--;
+        if (d.x <= 0) d.dir = "r";
+      }
+
+      this._demoPaint();
+
+      // ── AI press decision (evaluated once per movement tick) ───────────────
+      if (d.y < ROWS - 1 && d.pressCooldown <= 0) {
+        const below = d.cells[d.y + 1];
+        let overlap = 0;
+        for (let i = 0; i < d.rowLen; i++) {
+          const x = d.x + i;
+          if (x >= 0 && x < COLS && below[x] === 1) overlap++;
+        }
+        const total = d.rowLen;
+        const pct   = overlap / total;
+
+        // Press probability scales with alignment quality
+        const pressProb = pct >= 1.0 ? 0.85
+                        : pct >= 0.66 ? 0.45
+                        : pct >= 0.33 ? 0.08
+                        : 0.02;  // almost never press on terrible alignment
+
+        if (Math.random() < pressProb) {
+          d.pressCooldown = d.moveInterval * 2; // prevent double-press
+          this._demoPlaceRow();
+        }
+      } else if (d.y === ROWS - 1) {
+        // First row – no reference below; press after 4-8 steps
+        if (!d._firstRowSteps) d._firstRowSteps = rand(4, 8);
+        d._firstRowSteps--;
+        if (d._firstRowSteps <= 0) {
+          d._firstRowSteps = null;
+          this._demoPlaceRow();
+        }
+      }
+    }
+  }
+}
+
   
   // ═══════════════════════════════════════════════════════════
   //  MAIN LOOP
@@ -603,12 +868,13 @@ class Stacker {
     this.scanline = (this.scanline + 0.5) % CH;
 
     if (this.flashTm > 0) this.flashTm -= dt;
-
+ 
     this.particles = this.particles.filter(p => p.life > 0);
     this.particles.forEach(p => p.update());
 
     if (this.state === STATE.ATTRACT) {
       this._updateAttract(dt);
+     // this._simulatePlay(dt); // 👈 add this todo: merge demo mode into your real game engine so the AI literally plays the same code as the player (way cleaner and more “arcade authentic”). 
     } else if (this.state === STATE.PLAYING) {
       this._updatePlaying(dt);
     } else if (this.state === STATE.GAMEOVER) {
@@ -755,6 +1021,7 @@ class Stacker {
             g.brdClrTm >= g.brdClrTmSt - g.brdClrInt*bf - dt) {
           if (g.lftOvrBks.length > 0) {
             g.lftOvrBks[0].y++;
+            if (g.lftOvrBks[0].y === ROWS-1) sfx.play("blockFall");
             if (g.lftOvrBks[0].y > ROWS-1) {
               g.board[g.lftOvrBks[0].y-1][g.lftOvrBks[0].x] = 0;
               g.lftOvrBks.shift();
@@ -812,6 +1079,32 @@ class Stacker {
   _drawAttract() {
     
     /// TODO: probably improve screen when waiting for countdown in game - show visual if this.pauseActions === true override prize display phases.. (real countdown possibly.)
+    
+ 
+const d = this.demo;
+if (d && d.cells) {
+  // Draw all locked + active demo cells on top of the faded background
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      if (d.cells[row][col] === 1) {
+        const px = PAD + col * CELL;
+        const py = BOARD_TOP + PAD + row * CELL;
+
+        // Prize-row colours match the real board
+        let color = "#4af";
+        if (row === PRIZES[0].row) color = "#4af";
+        else if (row === PRIZES[1].row) color = "#ff4";
+
+        ctx.shadowColor = color;
+        ctx.shadowBlur  = 10;
+        ctx.fillStyle   = color;
+        ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
+        ctx.shadowBlur = 0;
+      }
+    }
+  }
+}
+    
     const t = this.attractTm;
 
     // animated blocks demo
@@ -1071,7 +1364,7 @@ class Stacker {
     ctx.fillRect(0,0,CW,CH);
   }
 }
-
+ 
 // ── Boot ──────────────────────────────────────────────────────
   
 class ArcadeBooter {
@@ -1081,32 +1374,76 @@ class ArcadeBooter {
     this.onComplete = onComplete;
     this.startTime = Date.now();
 
-    // Device Pixel Ratio (clamped to 2 for stability)
     this.DPR = Math.min(window.devicePixelRatio || 1, 2);
     this.cv.width = Math.round(this.cv.clientWidth * this.DPR);
     this.cv.height = Math.round(this.cv.clientHeight * this.DPR);
     this.ctx.setTransform(this.DPR, 0, 0, this.DPR, 0, 0);
 
-    this.logs = [
-      "MEMORY CHECK............OK",
-      "I/O CHIPSET.............OK",
-      "SOUND ROM...............LOADED",
-      "VIDEO DRIVER............READY",
-      "INITIALIZING STACKER OS..."
-    ];
+    // Generate fake ROM entries with CRC + address
+    this.logs = this.generateROMLogs();
 
     this.waitingForTap = false;
     this.onCompleteCalled = false;
+
     this.handleInput = this.handleInput.bind(this);
-    if(isElectron === false){
-    this.cv.addEventListener("mousedown", this.handleInput);
-    this.cv.addEventListener("touchstart", this.handleInput);
-    };
+    if (isElectron === false) {
+      this.cv.addEventListener("mousedown", this.handleInput);
+      this.cv.addEventListener("touchstart", this.handleInput);
+    }
+
     this.render();
   }
 
+  generateROMLogs() {
+    const makeHex = (len) =>
+      [...Array(len)]
+        .map(() => Math.floor(Math.random() * 16).toString(16))
+        .join("")
+        .toUpperCase();
+
+    const romNames = [
+      "P1 ROM", "P2 ROM",
+      "S FIX ROM",
+      "M1 AUDIO ROM",
+      "V1 PCM ROM",
+      "V2 PCM ROM",
+      "C1 GFX ROM",
+      "C2 GFX ROM",
+      "C3 GFX ROM",
+      "C4 GFX ROM"
+    ];
+
+    let addr = 0x000000;
+
+    const logs = romNames.map(name => {
+      const size = 0x20000;
+      const line = `${name.padEnd(14, " ")} ${addr
+        .toString(16)
+        .padStart(6, "0")
+        .toUpperCase()}  CRC:${makeHex(4)}  OK`;
+      addr += size;
+      return line;
+    });
+
+    return [
+      "----- ROM CHECK -----",
+      ...logs,
+      " ",
+      "WORK RAM TEST........",
+      "VIDEO RAM TEST.......",
+      "PALETTE RAM TEST.....",
+      " ",
+      "CHECKSUM VERIFY......OK",
+      "ALL TESTS PASSED",
+      "SYSTEM READY"
+    ];
+  }
+
   handleInput() {
-    if (this.waitingForTap && !this.onCompleteCalled || isElectron === true && !this.onCompleteCalled) {
+    if (
+      (this.waitingForTap && !this.onCompleteCalled) ||
+      (isElectron === true && !this.onCompleteCalled)
+    ) {
       this.onCompleteCalled = true;
       this.cv.removeEventListener("mousedown", this.handleInput);
       this.cv.removeEventListener("touchstart", this.handleInput);
@@ -1119,72 +1456,99 @@ class ArcadeBooter {
 
     const now = Date.now();
     const elapsed = now - this.startTime;
+
     const { ctx, cv } = this;
     const CW = cv.width / this.DPR;
     const CH = cv.height / this.DPR;
 
-    // Clear Screen
+    // Background
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, CW, CH);
 
-    // -------- PHASE 1: BIOS --------
-    if (elapsed < 3000) {
-      ctx.fillStyle = "#4af";
+    // CRT glow effect
+    ctx.shadowColor = "#33ff99";
+    ctx.shadowBlur = 8;
+
+    // -------- PHASE 1: ROM + RAM CHECK --------
+    if (elapsed < 6000) {
+      ctx.fillStyle = "#33ff99";
       ctx.font = "14px 'Courier New'";
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
 
-      const lineCount = Math.floor(elapsed / 500);
-      for (let i = 0; i <= lineCount; i++) {
-        if (this.logs[i]) ctx.fillText(`> ${this.logs[i]}`, 30, 60 + i * 25);
+      const lineDelay = 180;
+      const visibleLines = Math.floor(elapsed / lineDelay);
+
+      let y = 50;
+
+      for (let i = 0; i < visibleLines; i++) {
+        if (!this.logs[i]) continue;
+
+        let text = this.logs[i];
+
+        // Animate RAM test progress
+        if (text.includes("WORK RAM TEST")) {
+          const pct = Math.min(100, Math.floor((elapsed % 1000) / 10));
+          text = `WORK RAM TEST........${pct}%`;
+          if (pct === 100) text = "WORK RAM TEST........OK";
+        }
+
+        if (text.includes("VIDEO RAM TEST")) {
+          const pct = Math.min(100, Math.floor((elapsed % 1200) / 12));
+          text = `VIDEO RAM TEST.......${pct}%`;
+          if (pct === 100) text = "VIDEO RAM TEST.......OK";
+        }
+
+        if (text.includes("PALETTE RAM TEST")) {
+          const pct = Math.min(100, Math.floor((elapsed % 900) / 9));
+          text = `PALETTE RAM TEST.....${pct}%`;
+          if (pct === 100) text = "PALETTE RAM TEST.....OK";
+        }
+
+        ctx.fillText(text, 40, y);
+        y += 18;
       }
 
-      if (Math.floor(elapsed / 300) % 2) {
-        ctx.fillRect(30, 65 + Math.min(lineCount, 4) * 25, 10, 2);
+      // Cursor
+      const cursorY = 50 + visibleLines * 18;
+      if (Math.floor(now / 200) % 2) {
+        ctx.fillText("_", 40, cursorY);
       }
     }
 
-    // -------- PHASE 2: Logo Reveal --------
-    else if (elapsed < 6000) {
-      const alpha = Math.min(1, (elapsed - 3000) / 1000);
-      ctx.globalAlpha = alpha;
+    // -------- PHASE 2: SYSTEM READY --------
+    else if (elapsed < 8000) {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      ctx.shadowColor = "#4af";
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 50px 'Courier New'";
-      ctx.fillText("OPENSTACKER", CW / 2, CH / 2);
+      ctx.fillStyle = "#33ff99";
+      ctx.font = "bold 32px 'Courier New'";
+      ctx.fillText("SYSTEM READY", CW / 2, CH / 2 - 20);
 
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = "#ff4";
-      ctx.font = "12px 'Courier New'";
-      ctx.fillText("POWERED BY JARED VAN VALKENGOED", CW / 2, CH / 2 + 40);
-
-      ctx.globalAlpha = 1;
-    }
-
-    // -------- PHASE 3: Tap to Continue --------
-    else {
-      if(isElectron === false){
-       // if in browser, wait for tap to start sounds.
-      this.waitingForTap = true;
-  
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      
-      // Blinking effect 
-      ctx.globalAlpha = Math.floor(now / 500) % 2 ? 1 : 0;
-      ctx.fillStyle = "#fff";
       ctx.font = "14px 'Courier New'";
-      ctx.fillText("TAP TO CONTINUE", CW / 2, CH / 2);
-      ctx.globalAlpha = 1;
-      }else{
+      ctx.fillText("INSERT COIN", CW / 2, CH / 2 + 20);
+    }
+
+    // -------- PHASE 3: WAIT FOR INPUT --------
+    else {
+      if (isElectron === false) {
+        this.waitingForTap = true;
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.globalAlpha = Math.floor(now / 500) % 2 ? 1 : 0;
+        ctx.fillStyle = "#33ff99";
+        ctx.font = "14px 'Courier New'";
+        ctx.fillText("PRESS START", CW / 2, CH / 2 + 60);
+        ctx.globalAlpha = 1;
+      } else {
+        this.waitingForTap = true;
         this.handleInput();
       }
-      
-      
     }
+
+    ctx.shadowBlur = 0;
 
     requestAnimationFrame(() => this.render());
   }
@@ -1216,25 +1580,34 @@ let rotated = false;
 function fitToScreen() {
   const margin = 0;
 
-  const scaleX = (window.innerWidth - margin) / CW;
-  const scaleY = (window.innerHeight - margin) / CH;
+  const wrap = document.getElementById('wrap');
+  const cv = document.getElementById('c');
+  const side = document.getElementById('side');
+
+  // Calculate available width and height for the canvas
+  const availableWidth = window.innerWidth - side.offsetWidth - margin - 16; // 16 = gap
+  const availableHeight = window.innerHeight - margin;
+
+  const scaleX = availableWidth / CW;
+  const scaleY = availableHeight / CH;
 
   const scale = Math.min(scaleX, scaleY);
 
-  let transform = `translate(-50%, -50%) scale(${scale})`;
-
-  if (rotated) { 
-    transform += " rotate(90deg)";
+  cv.style.width = `${CW * scale}px`;
+  cv.style.height = `${CH * scale}px`;
+ 
+  // Optional rotation
+  if (rotated) {
+    cv.style.transform = "rotate(90deg)";
+    cv.style.transformOrigin = "center center";
+  } else {
+    cv.style.transform = "none";
   }
 
-  cv.style.position = "absolute";
-  cv.style.left = "50%";
-  cv.style.top = "50%";
-  cv.style.transformOrigin = "center center";
-  cv.style.transform = transform;
- 
+  // Keep canvas in normal flow
+  cv.style.position = "relative";
 }
-  
+   
 window.addEventListener("resize", fitToScreen);
 fitToScreen(); 
  
