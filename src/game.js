@@ -429,7 +429,7 @@ class Stacker {
     this.particles = [];
     this.attractTm = 0;
     this.attractPlays = 0;
-    this.attractPhase = 3;
+    this.attractPhase = 3; 
     this.attractBlink = 0;
     this.score = 0;
     this.highScore = HIGHSCORE;
@@ -501,7 +501,10 @@ class Stacker {
   }
   
   async _action(e) {
-    
+ 
+   if (this.demoActive) {
+      this._stopDemo();
+    }
     if(this.pauseActions === true){
      return;
     }
@@ -525,51 +528,50 @@ class Stacker {
     }
   }
 
-  // ── Game start ───────────────────────────────────────────────
+  // ── Game start ───────────────────────────────────────────────  
   async _startGame() {
-    // if (this.state === STATE.STARTING) return;
-    this.state = STATE.STARTING;
-    this.pauseActions = true;
-    const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
-    sfx.stopAll();
-    
-    
-if(!this.countDownTimer){
-    this.countDownTimer = 5;
-  } 
-const timer = setInterval(() => {
-  this.countDownTimer--;
- 
-  if (this.countDownTimer < 0) {
-    clearInterval(timer);
-    this.countDownTimer = 5;
-  }
-}, 1000);
-    sfx.stopAll();
-    sfx.play("place")
-    sfx.play("start")
-    await delay(5000);
-    this.pauseActions = false;
-    fireEvent("start");
-    this._resetBoard();
-    this.pos = {x: rand(0, COLS-1), y: ROWS-1};
-    this.dir = this.pos.x >= COLS-1 ? "l" : "r";
-    this.rowLen = 3; //(user can set here via settings)
-    this.moveInterval= 100;
-    this.moveInterval *= 1; //0.92; (user can set here via settings)
-    this.mvTm = 0;
-    this.placeTime = 0;
-    this.blocksDropped = [];
-    this.tmpDropped = [];
-    this.lftOvrBks = [];
-    this.brdClrTm = 0;
-    this.endTime = 0;
-    this.blnkFrm = 0;
-    this.score = 0;
-    this.particles = [];
-    this.flashMsg = "";
-    this.state = STATE.PLAYING;
-  }
+  // Stop any running demo immediately
+  if (this.demoActive) this._stopDemo();
+  this.demoPlayed = false;
+
+  this.state = STATE.STARTING;
+  this.pauseActions = true;
+  const delay = ms => new Promise(res => setTimeout(res, ms));
+
+  if (!this.countDownTimer) this.countDownTimer = 5;
+  const timer = setInterval(() => {
+    this.countDownTimer--;
+    if (this.countDownTimer < 0) {
+      clearInterval(timer);
+      this.countDownTimer = 5;
+    }
+  }, 1000);
+
+  sfx.stopAll();
+  sfx.play("place");
+  sfx.play("start");
+  await delay(5000);
+
+  this.pauseActions = false;
+  fireEvent("start");
+  this._resetBoard();
+  this.pos          = { x: rand(0, COLS - 1), y: ROWS - 1 };
+  this.dir          = this.pos.x >= COLS - 1 ? "l" : "r";
+  this.rowLen       = 3;
+  this.moveInterval = 100;
+  this.mvTm         = 0;
+  this.placeTime    = 0;
+  this.blocksDropped = [];
+  this.tmpDropped    = [];
+  this.lftOvrBks     = [];
+  this.brdClrTm      = 0;
+  this.endTime       = 0;
+  this.blnkFrm       = 0;
+  this.score         = 0;
+  this.particles     = [];
+  this.flashMsg      = "";
+  this.state = STATE.PLAYING;
+}
 
   // ── Place row ────────────────────────────────────────────────
   _placeRow(e) {
@@ -687,266 +689,83 @@ const timer = setInterval(() => {
   
 
 
-// ── _resetDemo ───────────────────────────────────────────────────────────────
-_resetDemo() {
-  this._resetBoard();
-
-  this.demo = {
-    // Board state for the demo (separate from this.board to avoid conflicts
-    // with the animated background in _drawAttract)
-    cells: Array.from({ length: ROWS }, () => Array(COLS).fill(0)),
-
-    x: 0,            // left edge of moving strip
-    y: ROWS - 1,     // current row (top = 0, bottom = ROWS-1)
-    dir: "r",
-    rowLen: 3,
-
-    moveInterval: 100,   // ms between steps – speeds up each row
-    mvTm: 100,           // countdown to next step
-
-    phase: "moving",     // "moving" | "falling" | "blinking" | "pausing"
-    pauseTm: 0,
-
-    // Falling blocks after a miss
-    fallers: [],         // [{x, y (float)}]
-    fallTm: 0,
-
-    // Blink after placement
-    blinkTm: 0,
-    blinkCount: 0,
-    blinkRow: -1,
-    blinkRowSnapshot: [],// which cols were lit when we placed
-
-    // AI press flag – set true for one tick when the AI decides to press
-    pressedThisTick: false,
-    // small cooldown so AI doesn't press every single tick
-    pressCooldown: 0,
-  };
-
-  // Paint the initial strip position
-  this._demoPaint();
-}
-
-// ── _demoPaint  (internal helper) ────────────────────────────────────────────
-_demoPaint() {
-  const d = this.demo;
-  if (!d || !d.cells || d.y < 0 || d.y >= ROWS) return;
-  // Clear the active row
-  for (let x = 0; x < COLS; x++) d.cells[d.y][x] = 0;
-  // Paint strip
-  for (let i = 0; i < d.rowLen; i++) {
-    const x = d.x + i;
-    if (x >= 0 && x < COLS) d.cells[d.y][x] = 1;
-  }
-}
-
-// ── _demoPlaceRow ─────────────────────────────────────────────────────────────
-_demoPlaceRow() {
-  const d = this.demo;
-  if (d.phase !== "moving") return;  // don't double-place
-
-  let missed = 0;
-  const fallers = [];
-if (d.cells[d.y]) {
-  if (d.y < ROWS - 1) {
-    for (let x = 0; x < COLS; x++) {
-      if (d.cells[d.y][x] === 1 && d.cells[d.y + 1][x] !== 1) {
-        d.cells[d.y][x] = 0;
-        fallers.push({ x, y: d.y + 0.0 }); // float y for animation
-        missed++;
-      }
-    }
-  }
-    d.rowLen -= missed;
-  }
  
-  // Clamp overhangs
-  const lo = Math.max(0, -d.x);
-  const ro = Math.max(0, (d.x + d.rowLen) - COLS);
-  d.rowLen -= (lo + ro);
+_startDemo() {
+  this.demoActive        = true;
+  this._aiCooldown       = 0;
+  this._aiFirstRowSteps  = null;
 
-  // Real-game breakpoints
-  const bps = [[12, 2], [6, 1]];
-  for (const [row, maxLen] of bps) {
-    if (d.y === row && d.rowLen > maxLen) d.rowLen = maxLen;
-  }
-
-  if (d.rowLen <= 0) {
-    // Lost – restart after a pause
-    d.phase = "pausing";
-    d.pauseTm = 1500;
-    return;
-  }
-
-  if (fallers.length > 0) {
-    d.fallers = fallers;
-    d.fallTm  = 55;
-    d.phase   = "falling";
-  } else {
-    // Perfect placement – start blink then advance
-    d.blinkRow          = d.y;
-    d.blinkRowSnapshot  = [...d.cells[d.y]];
-    d.blinkCount        = 6;
-    d.blinkTm           = 100;
-    d.phase             = "blinking";
-  }
+  // Boot a real game in-place — state stays STATE.ATTRACT
+  this._resetBoard();
+  this.pos           = { x: rand(0, COLS - 1), y: ROWS - 1 };
+  this.dir           = this.pos.x >= COLS - 1 ? "l" : "r";
+  this.rowLen        = 3;
+  this.moveInterval  = 100;
+  this.mvTm          = 0;
+  this.placeTime     = 0;
+  this.blocksDropped = [];
+  this.tmpDropped    = [];
+  this.lftOvrBks     = [];
+  this.brdClrTm      = 0;
+  this.endTime       = 0;
+  this.blnkFrm       = 0;
+  this.score         = 0;
+  this.particles     = [];
+  this.flashMsg      = "";
+  // DO NOT change this.state — stays STATE.ATTRACT
 }
 
-// ── _advanceDemoRow (internal) ────────────────────────────────────────────────
-_advanceDemoRow() {
-  const d = this.demo;
-  const prevY = d.y;
-  d.y--;
+_stopDemo() {
 
-  if (d.y < 0 || d.y >= ROWS) {
-    // Reached the top – win animation then restart
-    d.phase   = "pausing";
-    d.pauseTm = 2000;
-    return;
-  }
-
-  // Speed up slightly each row
-  d.moveInterval = Math.max(30, d.moveInterval - 5);
-  d.mvTm         = d.moveInterval;
-
-  // New random start position
-  d.x = rand(0, COLS - 1);
-  if (d.x + d.rowLen - 1 >= COLS - 1) d.dir = "l";
-  else if (d.x <= 0)                   d.dir = "r";
-
-  // Short pause before strip starts moving on the new row
-  d.phase   = "pausing";
-  d.pauseTm = 220 + (d.fallers.length > 0 ? 300 : 0);
-  d.fallers = [];
-
-  d._afterPause = "moving";
-
-  d.blinkRow = -1;
-
-  this._demoPaint();
+  this.state = STATE.ATTRACT;
+  this.demoActive = false;
+  this.demoPlayed = true;
+ 
+ 
 }
 
-// ── _simulatePlay ─────────────────────────────────────────────────────────────
+// AI "thumb" — only fires during demo, calls the real _placeRow
 _simulatePlay(dt) {
-  if (!this.demo) { this._resetDemo(); return; }
-  const d = this.demo;
+  if (!this.demoActive) return;
+  if (this.placeTime > 0) return;
 
-  // ── PHASE: pausing ──────────────────────────────────────────────────────────
-  if (d.phase === "pausing") {
-    d.pauseTm -= dt;
-    if (d.pauseTm <= 0) {
-      if (d.rowLen <= 0) {
-        // Restart the whole demo
-        this._resetDemo();
-      } else {
-        d.phase = d._afterPause || "moving";
-        d._afterPause = null;
+  this._aiCooldown = (this._aiCooldown || 0) - dt;
+  if (this._aiCooldown > 0) return;
+
+  // First row — press after random steps
+  if (this.pos.y === ROWS - 1) {
+    if (!this._aiFirstRowSteps) this._aiFirstRowSteps = rand(3, 8);
+    if (this.mvTm <= 0) {
+      if (--this._aiFirstRowSteps <= 0) {
+        this._aiFirstRowSteps = null;
+        this._aiCooldown = this.moveInterval * 2;
+        this._placeRow({});
       }
     }
     return;
   }
 
-  // ── PHASE: falling (missed blocks drop to the floor) ───────────────────────
-  if (d.phase === "falling") {
-    d.fallTm -= dt;
-    if (d.fallTm <= 0) {
-      d.fallTm = 55;
-      let allDone = true;
-      for (const fb of d.fallers) {
-        // Erase old cell
-        const oy = Math.floor(fb.y);
-        if (oy >= 0 && oy < ROWS) d.cells[oy][fb.x] = 0;
-        fb.y += 1;
-        const ny = Math.floor(fb.y);
-        if (ny < ROWS) {
-          d.cells[ny][fb.x] = 1;
-          allDone = false;
-        }
-      }
-      if (allDone) {
-        // After fall, blink the placed row then advance
-        if (d.blinkRow === -1) d.blinkRow = d.y; // shouldn't happen but safety
-        d.blinkRowSnapshot = [...d.cells[d.y]];
-        d.blinkCount = 4;
-        d.blinkTm    = 100;
-        d.phase      = "blinking";
-      }
-    }
-    return;
+  // Only decide at movement tick boundary
+  if (this.mvTm > 16) return;
+
+  const below = this.board[this.pos.y + 1];
+  let overlap = 0;
+  for (let i = 0; i < this.rowLen; i++) {
+    const x = this.pos.x + i;
+    if (x >= 0 && x < COLS && below[x] === 1) overlap++;
   }
 
-  // ── PHASE: blinking (placed row flashes before moving up) ──────────────────
-  if (d.phase === "blinking") {
-    d.blinkTm -= dt;
-    if (d.blinkTm <= 0) {
-      d.blinkTm = 100;
-      d.blinkCount--;
-      const lit = d.blinkCount % 2 === 0;
-      const row = d.blinkRow >= 0 ? d.blinkRow : d.y;
-      for (let x = 0; x < COLS; x++) {
-        d.cells[row][x] = lit ? d.blinkRowSnapshot[x] : 0;
-      }
-      if (d.blinkCount <= 0) {
-        // Restore fully lit then advance
-        for (let x = 0; x < COLS; x++) d.cells[row][x] = d.blinkRowSnapshot[x];
-        this._advanceDemoRow();
-      }
-    }
-    return;
+  const pct  = this.rowLen > 0 ? overlap / this.rowLen : 0;
+  const prob = pct >= 1.0  ? 0.82
+             : pct >= 0.66 ? 0.38
+             : pct >= 0.33 ? 0.06
+             : 0.01;
+
+  if (Math.random() < prob) {
+    this._aiCooldown = this.moveInterval + this.plcInt;
+    this._placeRow({});
   }
-
-  // ── PHASE: moving ───────────────────────────────────────────────────────────
-  if (d.phase === "moving") {
-    if (d.pressCooldown > 0) d.pressCooldown -= dt;
-
-    d.mvTm -= dt;
-    if (d.mvTm <= 0) {
-      d.mvTm = d.moveInterval;
-
-      // Move strip
-      if (d.dir === "r") {
-        d.x++;
-        if (d.x + d.rowLen - 1 >= COLS - 1) d.dir = "l";
-      } else {
-        d.x--;
-        if (d.x <= 0) d.dir = "r";
-      }
-
-      this._demoPaint();
-
-      // ── AI press decision (evaluated once per movement tick) ───────────────
-      if (d.y < ROWS - 1 && d.pressCooldown <= 0) {
-        const below = d.cells[d.y + 1];
-        let overlap = 0;
-        for (let i = 0; i < d.rowLen; i++) {
-          const x = d.x + i;
-          if (x >= 0 && x < COLS && below[x] === 1) overlap++;
-        }
-        const total = d.rowLen;
-        const pct   = overlap / total;
-
-        // Press probability scales with alignment quality
-        const pressProb = pct >= 1.0 ? 0.85
-                        : pct >= 0.66 ? 0.45
-                        : pct >= 0.33 ? 0.08
-                        : 0.02;  // almost never press on terrible alignment
-
-        if (Math.random() < pressProb) {
-          d.pressCooldown = d.moveInterval * 2; // prevent double-press
-          this._demoPlaceRow();
-        }
-      } else if (d.y === ROWS - 1) {
-        // First row – no reference below; press after 4-8 steps
-        if (!d._firstRowSteps) d._firstRowSteps = rand(4, 8);
-        d._firstRowSteps--;
-        if (d._firstRowSteps <= 0) {
-          d._firstRowSteps = null;
-          this._demoPlaceRow();
-        }
-      }
-    }
-  }
-}
+} 
 
   
   // ═══════════════════════════════════════════════════════════
@@ -962,15 +781,21 @@ _simulatePlay(dt) {
  
     this.particles = this.particles.filter(p => p.life > 0);
     this.particles.forEach(p => p.update());
+  
+   if (this.state === STATE.ATTRACT || this.state === STATE.STARTING) {
+  this._updateAttract(dt);
+}
+else if (this.state === STATE.PLAYING) {
+  this._updatePlaying(dt);
 
-    if (this.state === STATE.ATTRACT || this.state === STATE.STARTING) {
-      this._updateAttract(dt);
-     // this._simulatePlay(dt); // 👈 add this todo: merge demo mode into your real game engine so the AI literally plays the same code as the player (way cleaner and more “arcade authentic”). 
-    } else if (this.state === STATE.PLAYING) {
-      this._updatePlaying(dt);
-    } else if (this.state === STATE.GAMEOVER) {
-      this._updateGameover(dt);
-    }
+  // 👇 Demo AI runs only while playing
+  if (this.demoActive) {
+    this._simulatePlay(dt);
+  }
+}
+else if (this.state === STATE.GAMEOVER) {
+  this._updateGameover(dt);
+}
 
     this._draw();
     requestAnimationFrame(ts2 => this._loop(ts2));
@@ -978,60 +803,71 @@ _simulatePlay(dt) {
 
   // ── Attract update ───────────────────────────────────────────
   _updateAttract(dt) {
-    
-    this.attractTm += dt;
-    this.attractBlink = Math.floor(this.attractTm/500)%2;
-    if(!this.attractTimer){
-      this.attractTimer = new Timer();
-    }
-    if (this.attractTm > 8000) {
-      this.attractTm = 0;
-      this.attractPhase = (this.attractPhase+1)%4;
-  
-    }
-    
-    if(this.attractTimer.elapsed() >= 40037){
+  this.attractTm += dt;
+  this.attractBlink = Math.floor(this.attractTm / 500) % 2;
 
-      const sounds = [
-  "vo_comePlay",
-  "vo_stacker",
-  "vo_comeOn",
-  "vo_bet",
-  "vo_takeMeToTop",
-  "vo_stackerrr",
-  "vo_whoCanStackMe",
-  "attract_mode_sfx",
-  "attract_mode_sfx"
-];
+  if (!this.attractTimer) this.attractTimer = new Timer();
 
-sfx.play(sounds[Math.floor(Math.random() * sounds.length)]);
-      
-      this.attractTimer.reset()
+  // ── Periodic attract voice lines ──────────────────────────
+  if (this.attractTimer.elapsed() >= 40037) {
+    const sounds = [
+      "vo_comePlay","vo_stacker","vo_comeOn","vo_bet",
+      "vo_takeMeToTop","vo_stackerrr","vo_whoCanStackMe",
+      "attract_mode_sfx","attract_mode_sfx"
+    ];
+    sfx.play(sounds[Math.floor(Math.random() * sounds.length)]);
+    this.attractTimer.reset();
+  }
+
+  // ── Demo is actively running — don't advance phases ───────
+  if (this.demoActive) {
+    this._updatePlaying(dt);
+    this._simulatePlay(dt);
+
+    // Demo game ended: rowLen hit 0 (miss-out) or reached top
+    const gameEnded = this.state === STATE.GAMEOVER;
+    if (gameEnded) {
+      this._stopDemo();
+      this.attractPhase = 0;   // restart attract cycle from phase 0
+      this.attractTm    = 0;
+      this.demoPlayed   = true; // don't auto-start demo again this cycle
     }
-   
-     // ── Scroll state ────────────────────────────────────────────
+    return; // ← skip all phase-cycling logic below
+  }
+
+  // ── Normal phase cycling (only when demo is NOT running) ──
+ if (this.attractTm > 8000) {
+  this.attractTm = 0;
+  this.attractPhase = (this.attractPhase + 1) % 5;
+
+  if (this.attractPhase === 4 && !this.demoActive && !this.demoPlayed) {
+    this._startDemo();
+  }
+}
+
+if (this.attractPhase === 0 && this.attractTm < 100) {
+  this.demoPlayed = false;
+}
+
+  // ── Scroll animation (phase 3) ────────────────────────────
   if (!this.scroll) {
-    // Start offset so bitmap is entirely below the grid:
-    // grid row `r` shows bitmap row `offset - (ROWS - 1 - r)` when scrolling up.
-    // For nothing to be visible yet, we need offset < 0 by at least ROWS.
     this.scroll = { offset: -ROWS, speed: 0.025, done: false };
   }
   const s = this.scroll;
   if (this.attractPhase === 3 && !s.done) {
     s.offset += s.speed * dt;
-    // done once the last bitmap row has scrolled above row 0:
-    // that happens when offset > STACKER_BITMAP.length + ROWS
     if (s.offset >= STACKER_BITMAP.length + ROWS) {
       s.done = true;
-      this.attractPhase = (this.attractPhase + 1) % 4;
+      this.attractPhase = (this.attractPhase + 1) % 5;
       this.attractTm = 0;
+      if (this.attractPhase === 4 && !this.demoPlayed) this._startDemo();
     }
   }
   if (this.attractPhase !== 3) {
     s.offset = -ROWS;
     s.done   = false;
   }
-  }
+}
 
   // ── Playing update ───────────────────────────────────────────
   _updatePlaying(dt) {
@@ -1134,6 +970,11 @@ sfx.play(sounds[Math.floor(Math.random() * sounds.length)]);
     } else if (g.brdClrTm > 0) {
       this.state = STATE.BOARDCLEAR;
     }
+    
+    if (this.demoActive && this.state === STATE.BOARDCLEAR && this.brdClrTm <= 0) {
+  this._stopDemo();
+}
+    
   }
 
   // ── Board clear update ───────────────────────────────────────
@@ -1317,6 +1158,32 @@ if (d && d.cells) {
         ctx.restore();
       }
     }
+  } else  if (this.attractPhase === 4 && this.demoActive) {
+    this._drawHeader();
+    this._drawBoard();
+    this._drawPrizeLines();
+
+    ctx.save();
+    ctx.textAlign = "center";
+
+    // Faint DEMO watermark
+    ctx.globalAlpha = 0.10;
+    ctx.font        = "bold 68px 'Courier New'";
+    ctx.fillStyle   = "#fff";
+    ctx.fillText("DEMO", CW / 2, CH / 2 + 20);
+
+    // Blinking insert-coin prompt
+    if (this.attractBlink) {
+      ctx.globalAlpha = 0.85;
+      ctx.font        = "bold 13px 'Courier New'";
+      ctx.fillStyle   = this.credits > 0 ? "#4f4" : "#fa4";
+      ctx.fillText(
+        this.credits > 0 ? "▶  PRESS  TO  PLAY  ◀" : "INSERT  COIN  [C KEY]",
+        CW / 2, CH - 14
+      );
+    }
+    ctx.restore();
+    return;
   }
       
    }
