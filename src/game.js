@@ -429,7 +429,7 @@ class Stacker {
     this.particles = [];
     this.attractTm = 0;
     this.attractPlays = 0;
-    this.attractPhase = 3; 
+    this.attractPhase = 0; 
     this.attractBlink = 0;
     this.score = 0;
     this.highScore = HIGHSCORE;
@@ -657,6 +657,7 @@ class Stacker {
         sfx.play("gameOver");
         sfx.play("vo_ohNo");
         fireEvent("gameover", { win:false, score: this.score });
+        this._drawGameoverOverlay()
         g.loseTmSt = 4000;
       } else {
         // win — reached top!
@@ -840,8 +841,8 @@ else if (this.state === STATE.GAMEOVER) {
   this.attractTm = 0;
   this.attractPhase = (this.attractPhase + 1) % 5;
 
-  if (this.attractPhase === 4 && !this.demoActive && !this.demoPlayed) {
-    this._startDemo();
+  if (this.attractPhase === 4 && !this.demoActive && !this.demoPlayed && this.pauseActions != true) {
+    this._startDemo(); 
   }
 }
 
@@ -860,7 +861,7 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
       s.done = true;
       this.attractPhase = (this.attractPhase + 1) % 5;
       this.attractTm = 0;
-      if (this.attractPhase === 4 && !this.demoPlayed) this._startDemo();
+      if (this.attractPhase === 4 && !this.demoPlayed && this.pauseActions != true) this._startDemo();
     }
   }
   if (this.attractPhase !== 3) {
@@ -1345,9 +1346,8 @@ if (d && d.cells) {
 
   // ── Gameover overlay ──────────────────────────────────────────
   _drawGameoverOverlay() {
-    if (this.endTime > 0) return;
+    //if (this.endTime > 0) return;
     // only show after board clear
-    if (this.state !== STATE.BOARDCLEAR && this.endTime === 0 && this.brdClrTm === 0) {
       ctx.fillStyle = "rgba(0,0,20,0.7)";
       ctx.fillRect(0, CH/2-50, CW, 100);
       ctx.textAlign = "center";
@@ -1359,13 +1359,8 @@ if (d && d.cells) {
       ctx.font = "bold 18px 'Courier New'";
       ctx.fillStyle = "#ff4";
       ctx.fillText("SCORE: " + String(this.score).padStart(6,"0"), CW/2, CH/2+18);
-      if (Math.floor(this._frame/30)%2) {
-        ctx.font = "12px 'Courier New'";
-        ctx.fillStyle = "#4af";
-        ctx.fillText("PRESS TO CONTINUE", CW/2, CH/2+44);
-      }
       ctx.textAlign = "left";
-    }
+      this.attractPhase = 0;
   }
 
   // ── Particles ─────────────────────────────────────────────────
