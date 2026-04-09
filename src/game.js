@@ -1,7 +1,7 @@
 const defaultSettings = {
   sound_enabled: true,
   highscore: 0,
-  fullscreen: false, // Sync default with launch flag 
+  fullscreen: true, // Sync default with launch flag 
   free_play: false, // if free play is true - do not show insert credits message. 
   rotation: false,
   grid_rows: 15,
@@ -290,11 +290,47 @@ const PRIZES = [
 // ── Win animation frames (7-wide × 15-tall) ───────────────────
 const WIN_SEQ = [
 [[1,1,1,1,1,1,1],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]],
-   
+  
 
 [[0,0,0,0,0,0,0],[0,1,0,0,0,1,0],[0,1,0,1,0,1,0],[0,1,1,0,1,1,0],[0,1,0,0,0,1,0],[0,0,0,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,1,0,0,0,1,0],[0,1,1,0,0,1,0],[0,1,0,1,0,1,0],[0,1,0,0,1,1,0],[0,1,0,0,0,1,0]]
 ];
 
+const STACKER_BITMAP = [
+    [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  
+  // S
+  [0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,0],[0,1,1,1,1,1,0],[0,0,0,0,0,0,1],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0],
+  [0,0,0,0,0,0,0],
+  // T
+  [1,1,1,1,1,1,1],[0,0,1,1,1,0,0],[0,0,1,1,1,0,0],[0,0,1,1,1,0,0],[0,0,1,1,1,0,0],[0,0,1,1,1,0,0],[0,0,1,1,1,0,0],
+  [0,0,0,0,0,0,0],
+  // A
+  [0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],
+  [0,0,0,0,0,0,0],
+  // C
+  [0,1,1,1,1,1,0],[1,0,0,0,0,0,1],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,1],[0,1,1,1,1,1,0],
+  [0,0,0,0,0,0,0],
+  // K
+  [1,0,0,0,0,1,0],[1,0,0,0,1,0,0],[1,0,0,1,0,0,0],[1,0,1,0,0,0,0],[1,1,0,0,0,0,0],[1,0,1,0,0,0,0],[1,0,0,1,0,0,0],
+  [0,0,0,0,0,0,0],
+  // E
+  [1,1,1,1,1,1,1],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,0,0],[1,0,0,0,0,0,0],[1,0,0,0,0,0,0],[1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0],
+  // R
+  [1,1,1,1,1,0,0],[1,0,0,0,0,1,0],[1,0,0,0,0,1,0],[1,1,1,1,1,0,0],[1,0,1,0,0,0,0],[1,0,0,1,0,0,0],[1,0,0,0,1,0,0],
+  // trailing blank rows so the last letter fully scrolls off
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+];  
 // ═══════════════════════════════════════════════════════════════
 //  GAME STATES
 // ═══════════════════════════════════════════════════════════════
@@ -393,7 +429,7 @@ class Stacker {
     this.particles = [];
     this.attractTm = 0;
     this.attractPlays = 0;
-    this.attractPhase = 0;
+    this.attractPhase = 3;
     this.attractBlink = 0;
     this.score = 0;
     this.highScore = HIGHSCORE;
@@ -950,7 +986,7 @@ _simulatePlay(dt) {
     }
     if (this.attractTm > 8000) {
       this.attractTm = 0;
-      this.attractPhase = (this.attractPhase+1)%3;
+      this.attractPhase = (this.attractPhase+1)%4;
   
     }
     
@@ -972,7 +1008,29 @@ sfx.play(sounds[Math.floor(Math.random() * sounds.length)]);
       
       this.attractTimer.reset()
     }
-    
+   
+     // ── Scroll state ────────────────────────────────────────────
+  if (!this.scroll) {
+    // Start offset so bitmap is entirely below the grid:
+    // grid row `r` shows bitmap row `offset - (ROWS - 1 - r)` when scrolling up.
+    // For nothing to be visible yet, we need offset < 0 by at least ROWS.
+    this.scroll = { offset: -ROWS, speed: 0.025, done: false };
+  }
+  const s = this.scroll;
+  if (this.attractPhase === 3 && !s.done) {
+    s.offset += s.speed * dt;
+    // done once the last bitmap row has scrolled above row 0:
+    // that happens when offset > STACKER_BITMAP.length + ROWS
+    if (s.offset >= STACKER_BITMAP.length + ROWS) {
+      s.done = true;
+      this.attractPhase = (this.attractPhase + 1) % 4;
+      this.attractTm = 0;
+    }
+  }
+  if (this.attractPhase !== 3) {
+    s.offset = -ROWS;
+    s.done   = false;
+  }
   }
 
   // ── Playing update ───────────────────────────────────────────
@@ -1203,6 +1261,7 @@ if (d && d.cells) {
  
     
     if (this.pauseActions != true) {
+
     // prize display phases
     ctx.font = "bold 15px 'Courier New'";
     if (this.attractPhase === 0) {
@@ -1222,15 +1281,43 @@ if (d && d.cells) {
       ctx.fillStyle = "#fff";
       ctx.font = "11px 'Courier New'";
       ctx.fillText("Line up row 4 perfectly", CW/2, CH/2+42);
-    } else {
+    } else if (this.attractPhase === 2) {
       ctx.fillStyle = "#4af";
       ctx.fillText("HIGH SCORE", CW/2, CH/2-20);
       ctx.fillStyle = "#ff4";
       ctx.font = "bold 28px 'Courier New'";
       ctx.fillText(String(this.highScore).padStart(6,"0"), CW/2, CH/2+16);
+    } else if (this.attractPhase === 3 && this.scroll && !this.scroll.done) {
+    const bmpLen = STACKER_BITMAP.length;
+    const off    = this.scroll.offset; // fractional row index into bitmap
+
+    for (let row = 0; row < ROWS; row++) {
+      // which bitmap row maps to this grid row?
+      const bmpRow = Math.floor(off + row) % bmpLen;
+      const cells  = STACKER_BITMAP[bmpRow];
+
+      for (let col = 0; col < COLS; col++) {
+        if (!cells) continue;
+        if (!cells[col]) continue;
+
+        const px = PAD + col * CELL;
+        const py = BOARD_TOP + PAD + row * CELL;
+
+        // sub-pixel vertical blend: fade between adjacent rows
+        const frac   = (off + row) % 1;
+        const nextRow = STACKER_BITMAP[(bmpRow + 1) % bmpLen];
+        const alpha  = nextRow[col] ? 1 : (1 - frac * 0.6);
+
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.55;
+        ctx.shadowColor = "#4af";
+        ctx.shadowBlur  = 14;
+        ctx.fillStyle   = "#4af";
+        ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
+        ctx.restore();
+      }
     }
-      
-      
+  }
       
    }
     
@@ -1674,6 +1761,9 @@ const side = document.getElementById('side');
   }
 };
 
+if (SETTINGS.fullscreen && !document.fullscreenElement) {   document.documentElement.requestFullscreen();
+}  
+  
 const fsBtn = document.getElementById("fsBtn");
 
 fsBtn.onclick = () => {
