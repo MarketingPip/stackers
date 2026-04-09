@@ -429,7 +429,7 @@ class Stacker {
     this.particles = [];
     this.attractTm = 0;
     this.attractPlays = 0;
-    this.attractPhase = 0; 
+    this.attractPhase = 3; 
     this.attractBlink = 0;
     this.score = 0;
     this.highScore = HIGHSCORE;
@@ -530,12 +530,13 @@ class Stacker {
 
   // ── Game start ───────────────────────────────────────────────  
   async _startGame() {
+  this.pauseActions = true;  
   // Stop any running demo immediately
   if (this.demoActive) this._stopDemo();
   this.demoPlayed = false;
 
   this.state = STATE.STARTING;
-  this.pauseActions = true;
+ 
   const delay = ms => new Promise(res => setTimeout(res, ms));
 
   if (!this.countDownTimer) this.countDownTimer = 5;
@@ -721,7 +722,8 @@ _stopDemo() {
   this.state = STATE.ATTRACT;
   this.demoActive = false;
   this.demoPlayed = true;
- 
+  this.attractTm = 0;
+  this.attractPhase = (this.attractPhase + 1) % 5;
  
 }
 
@@ -1088,7 +1090,7 @@ if (d && d.cells) {
     ctx.save();
     const logoY = 60 + Math.sin(t/600)*6;
     ctx.textAlign = "center";
-
+    if(!this.demoActive){
     // glow
     ctx.shadowColor = "#4af";
     ctx.shadowBlur = 30;
@@ -1100,7 +1102,7 @@ if (d && d.cells) {
     ctx.font = "bold 13px 'Courier New'";
     ctx.fillStyle = "#4af";
     ctx.fillText("★  ARCADE EDITION  ★", CW/2, logoY+28);
- 
+    }
     
     if (this.pauseActions != true) {
 
@@ -1261,8 +1263,12 @@ if (d && d.cells) {
     ctx.textAlign = "center";
     ctx.font = "10px 'Courier New'";
     ctx.fillStyle = "#4af6";
+     if(!this.demoActive){
     ctx.fillText(`CREDITS: ${this.credits}`, CW/2, 56);
-
+     }   
+     if(this.demoActive){
+       ctx.fillText(`DEMO PLAY`, CW/2, 56);
+     }
     ctx.textAlign = "left";
   }
 
