@@ -1,7 +1,7 @@
 const defaultSettings = {
   sound_enabled: true,
   highscore: 0,
-  fullscreen: false, // Sync default with launch flag
+  fullscreen: false, // Sync default with launch flag 
   free_play: false, // if free play is true - do not show insert credits message. 
   rotation: false,
   grid_rows: 15,
@@ -9,7 +9,8 @@ const defaultSettings = {
   major_prize_row: 0, 
   minor_prize_row: 4,
   sfx_path: "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004",
-  electron_menu_bar: true, // set to false for debugging.
+  electron_menu_bar: true, // set to false for debugging.,
+  credits_required:1,
 };
 
 window.addEventListener('DOMContentLoaded', async () => { 
@@ -76,6 +77,8 @@ const SFX_MAP = {
   gameOver:     "/faldlrbg/053. SFX - Game over.mp3",
   coin:         "/ecymndbz/054. SFX - Insert coin.mp3",
   tick:         "/rewtdmar/062. SFX - Tick tock (Loop).mp3",
+  attract_mode_sfx:"/kimknlrc/043. SFX - Attract mode sound.mp3",
+  attract_mode_sfx2:"/ikcertto/044. SFX - Attraction.mp3",
   vo_careful:   "/pakwefph/066. Voice - Careful.mp3",
   vo_getTop:    "/ogrotdig/075. Voice - Get to the top.mp3",
   vo_takeMeToTop:    "/qadrwkku/099. Voice - Take me to the top.mp3",
@@ -90,26 +93,23 @@ const SFX_MAP = {
   vo_comeOn: "/sqbiosav/067. Voice - Come on, give me your best shot.mp3",
   vo_bet: "/bnmvqros/077. Voice - I bet you can build me to the top.mp3",
   vo_bet2: "/dkrbinpl/083. Voice - Oh bet you can stack the blocks.mp3",
-  vo_whoCanStackMe: "/klbwgqlj/105. Voice - Who can stack me to the top.mp3"
+  vo_whoCanStackMe: "/klbwgqlj/105. Voice - Who can stack me to the top.mp3",
+  vo_pressStartToPlay: "/kuqwmsbh/087. Voice - Press start to play.mp3"
 }; 
   
 class SoundManager {
   constructor() {
     this._cache = {};
     this._current = null;
+    this._positions = {}; // store playback positions
   }
 
-  /**
-   * New: Preloads every sound defined in the SFX_MAP.
-   * Call this once during your app's initialization.
-   */
   preloadAll() {
-    
-    console.log(SOUND_ENABLED)
+    console.log(SOUND_ENABLED);
     if (!SOUND_ENABLED) return;
-    
+
     console.log("Preloading all sound effects...");
-    
+
     Object.keys(SFX_MAP).forEach(key => {
       this._load(key);
     });
@@ -119,15 +119,11 @@ class SoundManager {
     if (!SOUND_ENABLED) return null;
 
     if (!this._cache[key]) {
-      // Construct the full path
       const path = SFX_PATH + encodeURI(SFX_MAP[key]);
-      
+
       const a = new Audio(path);
       a.preload = "auto";
-      
-      // For small sound effects, this helps ensure the browser 
-      // actually fetches the data immediately
-      a.load(); 
+      a.load();
 
       this._cache[key] = a;
     }
@@ -136,31 +132,52 @@ class SoundManager {
 
   play(key, loop = false) {
     if (!SOUND_ENABLED) return;
-    
+
     const a = this._load(key);
     if (!a) return;
 
-    // If it's already playing, we reset it to the start
-    a.currentTime = 0;
     a.loop = loop;
-    
-    // play() returns a promise; we catch errors (like autoplay blocks)
+
+    // resume if position exists, otherwise start fresh
+    a.currentTime = this._positions[key] || 0;
+
     a.play().catch(e => console.warn(`Playback failed for ${key}:`, e));
-  } 
+  }
 
   stop(key) {
     const a = this._cache[key];
-    if (a) { 
-      a.pause(); 
-      a.currentTime = 0; 
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+      this._positions[key] = 0;
     }
   }
 
-  stopAll() {
-    Object.values(this._cache).forEach(a => { 
-      a.pause(); 
-      a.currentTime = 0; 
+  // ✅ Updated stopAll with preserve list
+  stopAll(preserveKeys = []) {
+    Object.keys(this._cache).forEach(key => {
+      const a = this._cache[key];
+      if (!a) return;
+
+      if (preserveKeys.includes(key)) {
+        // pause and remember position
+        this._positions[key] = a.currentTime;
+        a.pause();
+      } else {
+        // full stop
+        a.pause();
+        a.currentTime = 0;
+        this._positions[key] = 0;
+      }
     });
+  }
+
+  resume(key) {
+    const a = this._cache[key];
+    if (a) {
+      a.currentTime = this._positions[key] || 0;
+      a.play().catch(e => console.warn(`Resume failed for ${key}:`, e));
+    }
   }
 }
 
@@ -272,8 +289,10 @@ const PRIZES = [
 
 // ── Win animation frames (7-wide × 15-tall) ───────────────────
 const WIN_SEQ = [
-  [[1,1,1,1,1,1,1],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]],
-  [[0,0,0,0,0,0,0],[0,1,0,0,0,1,0],[0,1,0,1,0,1,0],[0,1,1,0,1,1,0],[0,1,0,0,0,1,0],[0,0,0,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,0,0,0,0],[0,1,0,1,1,0,0],[0,1,1,0,0,1,0],[0,1,0,0,0,1,0],[0,1,0,0,0,1,0]],
+[[1,1,1,1,1,1,1],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]],
+   
+
+[[0,0,0,0,0,0,0],[0,1,0,0,0,1,0],[0,1,0,1,0,1,0],[0,1,1,0,1,1,0],[0,1,0,0,0,1,0],[0,0,0,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,1,0,0,0,1,0],[0,1,1,0,0,1,0],[0,1,0,1,0,1,0],[0,1,0,0,1,1,0],[0,1,0,0,0,1,0]]
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -344,7 +363,7 @@ async function setHighscore(score){
   
 const HIGHSCORE = await getHighscore();
 class Stacker {
-  constructor() {
+  constructor(creditsRequired=1) {
     this.state = STATE.ATTRACT;
     this.pauseActions = false;
     this.board = [];
@@ -356,6 +375,7 @@ class Stacker {
     this.placeTime = 0;
     this.plcInt = 250;
     this.plcTmSt = 0;
+    this.credits_required = creditsRequired;
     this.mssLps = 3;
     this.mnrPrzLps = 3;
     this.blocksDropped = [];
@@ -401,7 +421,22 @@ class Stacker {
     fireEvent("insertcoin", { credits: this.credits });
     this._flash("CREDIT " + this.credits);
     this._draw();
+  if(this.state === STATE.ATTRACT) {
+    if(this.credits >= this.credits_required && this.pauseActions != true ||   this.credits_required === 0 && this.pauseActions != true){
+    // Stop everything EXCEPT keep "music" resumable 
+    sfx.stopAll(['attract']);
+
+    sfx.play("vo_pressStartToPlay");
+ 
+      setTimeout(() => {
+        if(this.state != STATE.STARTING){
+          sfx.resume("attract");
+        };
+      }, 2000); // 3000 ms = 3 seconds
+      
+    };
   }
+  }  
 
   // ── Input ────────────────────────────────────────────────────
  _bindInput() {
@@ -439,7 +474,7 @@ class Stacker {
         this.credits--;
         await this._startGame();
       } else {
-        this._flash("INSERT COIN  [C KEY]");
+        this._flash("INSERT COIN  [C KEY]");  
       }
       return;
     } 
@@ -450,13 +485,14 @@ class Stacker {
     if (this.state === STATE.GAMEOVER && this.endTime===0 && this.brdClrTm===0) {
       this.state = STATE.ATTRACT;
       sfx.play("attract", true);
+     // sfx.setPersistent("music", true);
     }
   }
 
   // ── Game start ───────────────────────────────────────────────
   async _startGame() {
     // if (this.state === STATE.STARTING) return;
-    //this.state = STATE.STARTING;
+    this.state = STATE.STARTING;
     this.pauseActions = true;
     const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
     sfx.stopAll();
@@ -473,7 +509,7 @@ const timer = setInterval(() => {
     this.countDownTimer = 5;
   }
 }, 1000);
-    
+    sfx.stopAll();
     sfx.play("place")
     sfx.play("start")
     await delay(5000);
@@ -891,7 +927,7 @@ _simulatePlay(dt) {
     this.particles = this.particles.filter(p => p.life > 0);
     this.particles.forEach(p => p.update());
 
-    if (this.state === STATE.ATTRACT) {
+    if (this.state === STATE.ATTRACT || this.state === STATE.STARTING) {
       this._updateAttract(dt);
      // this._simulatePlay(dt); // 👈 add this todo: merge demo mode into your real game engine so the AI literally plays the same code as the player (way cleaner and more “arcade authentic”). 
     } else if (this.state === STATE.PLAYING) {
@@ -920,7 +956,19 @@ _simulatePlay(dt) {
     
     if(this.attractTimer.elapsed() >= 40037){
 
-      sfx.play(["vo_comePlay","vo_stacker","vo_comeOn", "vo_bet", "vo_takeMeToTop", "vo_stackerrr", "vo_whoCanStackMe"][Math.floor(Math.random()*3)]);
+      const sounds = [
+  "vo_comePlay",
+  "vo_stacker",
+  "vo_comeOn",
+  "vo_bet",
+  "vo_takeMeToTop",
+  "vo_stackerrr",
+  "vo_whoCanStackMe",
+  "attract_mode_sfx",
+  "attract_mode_sfx"
+];
+
+sfx.play(sounds[Math.floor(Math.random() * sounds.length)]);
       
       this.attractTimer.reset()
     }
@@ -1072,7 +1120,7 @@ _simulatePlay(dt) {
     ctx.fillStyle = bg;
     ctx.fillRect(0,0,CW,CH);
 
-    if (this.state === STATE.ATTRACT) {
+    if (this.state === STATE.ATTRACT || this.state === STATE.STARTING) {
       this._drawAttract();
     } else {
       this._drawHeader();
@@ -1407,83 +1455,39 @@ if (d && d.cells) {
  
 // ── Boot ──────────────────────────────────────────────────────
   
-class ArcadeBooter {
+class ArcadeBooter  {
   constructor(canvas, context, onComplete) {
     this.cv = canvas;
     this.ctx = context;
     this.onComplete = onComplete;
     this.startTime = Date.now();
 
+    // Device Pixel Ratio (clamped to 2 for stability)
     this.DPR = Math.min(window.devicePixelRatio || 1, 2);
     this.cv.width = Math.round(this.cv.clientWidth * this.DPR);
     this.cv.height = Math.round(this.cv.clientHeight * this.DPR);
     this.ctx.setTransform(this.DPR, 0, 0, this.DPR, 0, 0);
-
-    // Generate fake ROM entries with CRC + address
-    this.logs = this.generateROMLogs();
+ 
+    this.logs = [
+      "MEMORY CHECK............OK",
+      "I/O CHIPSET.............OK",
+      "SOUND ROM...............LOADED",
+      "VIDEO DRIVER............READY",
+      "INITIALIZING STACKER OS..."
+    ];
 
     this.waitingForTap = false;
     this.onCompleteCalled = false;
-
     this.handleInput = this.handleInput.bind(this);
-    if (isElectron === false) {
-      this.cv.addEventListener("mousedown", this.handleInput);
-      this.cv.addEventListener("touchstart", this.handleInput);
-    }
-
+    if(isElectron === false){
+    this.cv.addEventListener("mousedown", this.handleInput);
+    this.cv.addEventListener("touchstart", this.handleInput);
+    };
     this.render();
   }
 
-  generateROMLogs() {
-    const makeHex = (len) =>
-      [...Array(len)]
-        .map(() => Math.floor(Math.random() * 16).toString(16))
-        .join("")
-        .toUpperCase();
-
-    const romNames = [
-      "P1 ROM", "P2 ROM",
-      "S FIX ROM",
-      "M1 AUDIO ROM",
-      "V1 PCM ROM",
-      "V2 PCM ROM",
-      "C1 GFX ROM",
-      "C2 GFX ROM",
-      "C3 GFX ROM",
-      "C4 GFX ROM"
-    ];
-
-    let addr = 0x000000;
-
-    const logs = romNames.map(name => {
-      const size = 0x20000;
-      const line = `${name.padEnd(14, " ")} ${addr
-        .toString(16)
-        .padStart(6, "0")
-        .toUpperCase()}  CRC:${makeHex(4)}  OK`;
-      addr += size;
-      return line;
-    });
-
-    return [
-      "----- ROM CHECK -----",
-      ...logs,
-      " ",
-      "WORK RAM TEST........",
-      "VIDEO RAM TEST.......",
-      "PALETTE RAM TEST.....",
-      " ",
-      "CHECKSUM VERIFY......OK",
-      "ALL TESTS PASSED",
-      "SYSTEM READY"
-    ];
-  }
-
   handleInput() {
-    if (
-      (this.waitingForTap && !this.onCompleteCalled) ||
-      (isElectron === true && !this.onCompleteCalled)
-    ) {
+    if (this.waitingForTap && !this.onCompleteCalled || isElectron === true && !this.onCompleteCalled) {
       this.onCompleteCalled = true;
       this.cv.removeEventListener("mousedown", this.handleInput);
       this.cv.removeEventListener("touchstart", this.handleInput);
@@ -1496,99 +1500,72 @@ class ArcadeBooter {
 
     const now = Date.now();
     const elapsed = now - this.startTime;
-
     const { ctx, cv } = this;
     const CW = cv.width / this.DPR;
     const CH = cv.height / this.DPR;
 
-    // Background
+    // Clear Screen
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, CW, CH);
 
-    // CRT glow effect
-    ctx.shadowColor = "#33ff99";
-    ctx.shadowBlur = 8;
-
-    // -------- PHASE 1: ROM + RAM CHECK --------
-    if (elapsed < 6000) {
-      ctx.fillStyle = "#33ff99";
+    // -------- PHASE 1: BIOS --------
+    if (elapsed < 3000) {
+      ctx.fillStyle = "#4af";
       ctx.font = "14px 'Courier New'";
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
 
-      const lineDelay = 180;
-      const visibleLines = Math.floor(elapsed / lineDelay);
-
-      let y = 50;
-
-      for (let i = 0; i < visibleLines; i++) {
-        if (!this.logs[i]) continue;
-
-        let text = this.logs[i];
-
-        // Animate RAM test progress
-        if (text.includes("WORK RAM TEST")) {
-          const pct = Math.min(100, Math.floor((elapsed % 1000) / 10));
-          text = `WORK RAM TEST........${pct}%`;
-          if (pct === 100) text = "WORK RAM TEST........OK";
-        }
-
-        if (text.includes("VIDEO RAM TEST")) {
-          const pct = Math.min(100, Math.floor((elapsed % 1200) / 12));
-          text = `VIDEO RAM TEST.......${pct}%`;
-          if (pct === 100) text = "VIDEO RAM TEST.......OK";
-        }
-
-        if (text.includes("PALETTE RAM TEST")) {
-          const pct = Math.min(100, Math.floor((elapsed % 900) / 9));
-          text = `PALETTE RAM TEST.....${pct}%`;
-          if (pct === 100) text = "PALETTE RAM TEST.....OK";
-        }
-
-        ctx.fillText(text, 40, y);
-        y += 18;
+      const lineCount = Math.floor(elapsed / 500);
+      for (let i = 0; i <= lineCount; i++) {
+        if (this.logs[i]) ctx.fillText(`> ${this.logs[i]}`, 30, 60 + i * 25);
       }
 
-      // Cursor
-      const cursorY = 50 + visibleLines * 18;
-      if (Math.floor(now / 200) % 2) {
-        ctx.fillText("_", 40, cursorY);
+      if (Math.floor(elapsed / 300) % 2) {
+        ctx.fillRect(30, 65 + Math.min(lineCount, 4) * 25, 10, 2);
       }
     }
 
-    // -------- PHASE 2: SYSTEM READY --------
-    else if (elapsed < 8000) {
+    // -------- PHASE 2: Logo Reveal --------
+    else if (elapsed < 6000) {
+      const alpha = Math.min(1, (elapsed - 3000) / 1000);
+      ctx.globalAlpha = alpha;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      ctx.fillStyle = "#33ff99";
-      ctx.font = "bold 32px 'Courier New'";
-      ctx.fillText("SYSTEM READY", CW / 2, CH / 2 - 20);
+      ctx.shadowColor = "#4af";
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 50px 'Courier New'";
+      ctx.fillText("OPENSTACKER", CW / 2, CH / 2);
 
-      ctx.font = "14px 'Courier New'";
-      ctx.fillText("INSERT COIN", CW / 2, CH / 2 + 20);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#ff4";
+      ctx.font = "12px 'Courier New'";
+      ctx.fillText("POWERED BY JARED VAN VALKENGOED", CW / 2, CH / 2 + 40);
+
+      ctx.globalAlpha = 1;
     }
 
-    // -------- PHASE 3: WAIT FOR INPUT --------
+    // -------- PHASE 3: Tap to Continue --------
     else {
-      if (isElectron === false) {
-        this.waitingForTap = true;
-
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        ctx.globalAlpha = Math.floor(now / 500) % 2 ? 1 : 0;
-        ctx.fillStyle = "#33ff99";
-        ctx.font = "14px 'Courier New'";
-        ctx.fillText("PRESS START", CW / 2, CH / 2 + 60);
-        ctx.globalAlpha = 1;
-      } else {
-        this.waitingForTap = true;
+      if(isElectron === false){
+       // if in browser, wait for tap to start sounds.
+      this.waitingForTap = true;
+  
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      
+      // Blinking effect 
+      ctx.globalAlpha = Math.floor(now / 500) % 2 ? 1 : 0;
+      ctx.fillStyle = "#fff";
+      ctx.font = "14px 'Courier New'";
+      ctx.fillText("TAP TO CONTINUE", CW / 2, CH / 2);
+      ctx.globalAlpha = 1;
+      }else{
         this.handleInput();
       }
+      
+      
     }
-
-    ctx.shadowBlur = 0;
 
     requestAnimationFrame(() => this.render());
   }
@@ -1596,11 +1573,12 @@ class ArcadeBooter {
  
  new ArcadeBooter(cv, ctx, () => {
   // This callback runs ONLY after the 6-second animation finishes
-  const game = new Stacker();
+  
+  const game = new Stacker(SETTINGS.credits_required);
   sfx.play("attract", true);
    
  }) 
-
+  
 // ── External API for Arduino / hardware integration ───────────
 window.STACKER = {
   insertCoin: () => game.insertCoin(),
