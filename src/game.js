@@ -1289,15 +1289,6 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
     ],
     default: { stop0: "#9ff", stop5: "#5cf", stop1: "#048", shadow: "#5cf", empty: "#011" }
   },
-  emerald: {
-    bg: "#081820",
-    grid: "#30623055",
-    text: "#8bac0f88",
-    prizes: [
-      { stop0: "#9bbc0f", stop4: "#8bac0f", stop1: "#306230", shadow: "#9bbc0f", empty: "#0f380f" },
-      { stop0: "#9bbc0f", stop4: "#8bac0f", stop1: "#306230", shadow: "#9bbc0f", empty: "#0f380f" }
-    ],
-  },
         matrix: {
     bg: "#000",
     grid: "#0f02",
@@ -1307,13 +1298,37 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
       { stop0: "#dfd", stop4: "#bbfb", stop1: "#040", shadow: "#0f0", empty: "#001000" }  // Minor
     ],
     default: { stop0: "#afa", stop5: "#0c0", stop1: "#020", shadow: "#0f0", empty: "#000500" }
-  }
+  },
+  // The Iconic Red Arcade Model
+  classic_red: {
+    bg: "#000",
+    grid: "#300", 
+    text: "#f008",
+    prizes: [
+      { stop0: "#fff", stop4: "#f00", stop1: "#600", shadow: "#f00", empty: "#200" }, // Major Prize
+      { stop0: "#fff", stop4: "#f00", stop1: "#600", shadow: "#f00", empty: "#200" }  // Minor Prize
+    ],
+    default: { stop0: "#f55", stop5: "#f00", stop1: "#400", shadow: "#f00", empty: "#100" }
+  },
+        
+ // THE BLUE MODEL (Stacker Club)
+  classic_blue: {
+    bg: "#000",
+    grid: "#0244", // Semi-transparent bright blue grid
+    text: "#0ff8", // Bright Cyan text
+    prizes: [
+      { stop0: "#fff", stop4: "#0ff", stop1: "#06a", shadow: "#0ff", empty: "#001" }, // Major
+      { stop0: "#fff", stop4: "#0ff", stop1: "#06a", shadow: "#0ff", empty: "#001" }  // Minor
+    ],
+    // "Electric Blue" blocks with a pure white center for that "bright LED" look
+    default: { stop0: "#fff", stop5: "#0cf", stop1: "#006", shadow: "#0ff", empty: "#001220" }
+  },        
 };
-    
+     
   const g = this;
   // Ensure we at least have an empty object to prevent "cannot read property of undefined"
-  const theme = THEMES[this.currentTheme] ?? THEMES['matrix'] ?? {};
-
+  const theme = THEMES[this.currentTheme] ?? THEMES['cyberpunk'] ?? {};
+ 
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       const px = PAD + x * CELL;
