@@ -1287,6 +1287,11 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
       { stop0: "#fff", stop4: "#4af", stop1: "#048", shadow: "#4af", empty: "#001830" }, // Major
       { stop0: "#fff", stop4: "#ff8", stop1: "#880", shadow: "#ff4", empty: "#181800" }  // Minor
     ],
+  PRIZES:[
+  { label:"MAJOR PRIZE", color:"#4af", row:0  },
+  { label:"MINOR PRIZE", color:"#ff4", row:4  },
+],  
+    
     default: { stop0: "#9ff", stop5: "#5cf", stop1: "#048", shadow: "#5cf", empty: "#011" }
   },
         matrix: {
@@ -1295,8 +1300,12 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
     text: "#0f08",
     prizes: [
       { stop0: "#fff", stop4: "#0f0", stop1: "#040", shadow: "#0f0", empty: "#001000" }, // Major (White core)
-      { stop0: "#dfd", stop4: "#bbfb", stop1: "#040", shadow: "#0f0", empty: "#001000" }  // Minor
+      { stop0: "#dfd", stop4: "#bbfb", stop1: "#040", shadow: "#0f0", empty: "#001000" }  // Minor 
     ],
+         PRIZES: [
+  { label: "MAJOR PRIZE", color: "#66ff66", row: 0 }, // bright neon green
+  { label: "MINOR PRIZE", color: "#00cc44", row: 4 }, // darker green
+],
     default: { stop0: "#afa", stop5: "#0c0", stop1: "#020", shadow: "#0f0", empty: "#000500" }
   },
   // The Iconic Red Arcade Model
@@ -1305,12 +1314,17 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
     grid: "#300", 
     text: "#f008",
     prizes: [
-      { stop0: "#fff", stop4: "#f00", stop1: "#600", shadow: "#f00", empty: "#200" }, // Major Prize
+     { stop0: "#fff", stop4: "#f00", stop1: "#600", shadow: "#f00", empty: "#200" }, // Major Prize
       { stop0: "#fff", stop4: "#f00", stop1: "#600", shadow: "#f00", empty: "#200" }  // Minor Prize
     ],
+    
+PRIZES: [
+  { label: "MAJOR PRIZE", color: "#ff5555", row: 0 }, // glowing red (top prize)
+  { label: "MINOR PRIZE", color: "#cc0000", row: 4 }, // darker red
+],    
     default: { stop0: "#f55", stop5: "#f00", stop1: "#400", shadow: "#f00", empty: "#100" }
   },
-        
+         
  // THE BLUE MODEL (Stacker Club)
   classic_blue: {
     bg: "#000",
@@ -1327,8 +1341,10 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
      
   const g = this;
   // Ensure we at least have an empty object to prevent "cannot read property of undefined"
-  const theme = THEMES[this.currentTheme] ?? THEMES['cyberpunk'] ?? {};
+  const theme = THEMES[this.currentTheme] ?? THEMES['matrix'] ?? {};
  
+ this.currentTheme = theme;  
+    
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       const px = PAD + x * CELL;
@@ -1390,7 +1406,7 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
 
   // ── Prize lines ───────────────────────────────────────────────
   _drawPrizeLines() {
-    for (const p of PRIZES) {
+    for (const p of this.currentTheme.PRIZES) {
       const y = BOARD_TOP + PAD + p.row*CELL;
       ctx.shadowColor = p.color;
       ctx.shadowBlur = 8;
