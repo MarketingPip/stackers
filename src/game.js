@@ -94,7 +94,10 @@ const SFX_MAP = {
   vo_bet: "/bnmvqros/077. Voice - I bet you can build me to the top.mp3",
   vo_bet2: "/dkrbinpl/083. Voice - Oh bet you can stack the blocks.mp3",
   vo_whoCanStackMe: "/klbwgqlj/105. Voice - Who can stack me to the top.mp3",
-  vo_pressStartToPlay: "/kuqwmsbh/087. Voice - Press start to play.mp3"
+  vo_pressStartToPlay: "/kuqwmsbh/087. Voice - Press start to play.mp3",
+  vo_fillTheBlocksToTheTop: "/ufrtqaev/074. Voice - Fill the blocks to the top blue and win prizes.mp3",
+  vo_headingUp: "/tracmcby/103. Voice - We're heading up.mp3",
+  vo_woohoo: "/clusfvoj/107. Voice - Whooo.mp3"
 }; 
   
 class SoundManager {
@@ -480,11 +483,16 @@ class Stacker {
       await this._action(e);
     });
   
-    document.addEventListener("keydown", async (e) => {
-      if (e.code === "Space" || e.code === "Enter" || e.code === "ArrowDown") {
+    document.addEventListener("keydown", async (e) => {     
+      const ACTION_KEYS = ["NumpadEnter", "Enter", "ArrowDown", "Space"]
+      
+      if (ACTION_KEYS.includes(e.code)) {
         e.preventDefault();
-        await this._action(e);
-      }
+        await this._action();
+        if(this.state === STATE.ATTRACT){
+          sfx.play("place");
+        }; 
+      } 
       if (e.code === "KeyC") {
         this.insertCoin();
       }
@@ -529,7 +537,7 @@ class Stacker {
   }
 
   // ── Game start ───────────────────────────────────────────────  
-  async _startGame() {
+  async _startGame(firstPlay=true) {
   this.pauseActions = true;  
   // Stop any running demo immediately
   if (this.demoActive) this._stopDemo();
@@ -608,8 +616,15 @@ class Stacker {
       if(g.rowLen != 0 && missed != 0){
         sfx.play("blockFall");
       }
+      
+     
+      
     }
-
+  
+      // play woo unless first row (same as arcade game)
+      if(g.pos.y != 14 && g.rowLen != 0 && missed === 0){
+        sfx.play("vo_woohoo");
+      }
     fireEvent("place", { row: g.pos.y, rowLen: g.rowLen, missed });
 
     if (missed > 0) {
@@ -674,12 +689,20 @@ class Stacker {
       }
       g.endTime = g.loseTmSt;
       this.state = STATE.GAMEOVER;
-      if (this.score > this.highScore) {
+      if (this.score > this.highScore && !this.demoActive) {
         this.highScore = this.score;
         setHighscore(this.highScore);
        // localStorage.setItem("stacker_hs", this.highScore);
       }
     }
+    
+    
+    // voice lines at key rows (on drop)
+    if (missed === 0 && g.pos.y === 9 && !g.hasVoiceLinePlayed['vo_headingUp']){   
+                                                                    g.hasVoiceLinePlayed['vo_headingUp'] = true;
+          sfx.play("vo_headingUp");
+              }
+    
     this._draw();
   }
 
@@ -816,7 +839,8 @@ else if (this.state === STATE.GAMEOVER) {
     const sounds = [
       "vo_comePlay","vo_stacker","vo_comeOn","vo_bet",
       "vo_takeMeToTop","vo_stackerrr","vo_whoCanStackMe",
-      "attract_mode_sfx","attract_mode_sfx"
+      "attract_mode_sfx","attract_mode_sfx2", 
+      "vo_fillTheBlocksToTheTop"
     ];
     sfx.play(sounds[Math.floor(Math.random() * sounds.length)]);
     this.attractTimer.reset();
@@ -889,15 +913,18 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
           if (g.pos.x+g.rowLen < COLS)              g.board[g.pos.y][g.pos.x+g.rowLen]=0;
         }
         g.mvTm = g.moveInterval;
-        // voice lines at key rows
-        if (g.pos.y === 14 && !g.hasVoiceLinePlayed['vo_lastBlock']){          //sfx.play("vo_lastBlock");
+        // voice lines at key rows (new row started)
+        if (g.pos.y === 1 && !g.hasVoiceLinePlayed['vo_lastBlock']){          //sfx.play("vo_lastBlock");
                                                     g.hasVoiceLinePlayed['vo_lastBlock'] = true;
          }
+      
         
-        if (g.pos.y === 10 && !g.hasVoiceLinePlayed['vo_careful']){   //sfx.play("vo_careful");
-                                                                   g.hasVoiceLinePlayed['careful'] = true;
+        
+        if (g.pos.y === 14 && !g.hasVoiceLinePlayed['vo_careful']){   
+                                                                    g.hasVoiceLinePlayed['vo_careful'] = true;
+          sfx.play("vo_careful");
               }
-        
+         
       } else {
         g.mvTm = Math.max(0, g.mvTm - dt);
       }
@@ -1088,7 +1115,7 @@ if (d && d.cells) {
 
     // logo
     ctx.save();
-    const logoY = 60 + Math.sin(t/600)*6;
+    const logoY = 40 + Math.sin(t/600)*6;
     ctx.textAlign = "center";
     if(!this.demoActive){
     // glow
@@ -1124,7 +1151,7 @@ if (d && d.cells) {
       ctx.fillText("MINOR PRIZE", CW/2, CH/2+20);
       ctx.fillStyle = "#fff";
       ctx.font = "11px 'Courier New'";
-      ctx.fillText("Line up row 4 perfectly", CW/2, CH/2+42);
+      ctx.fillText("Line up row 11 perfectly", CW/2, CH/2+42);
     } else if (this.attractPhase === 2) {
       ctx.fillStyle = "#4af";
       ctx.fillText("HIGH SCORE", CW/2, CH/2-20);
