@@ -13,6 +13,74 @@ const defaultSettings = {
   credits_required:1,
 };
 
+const THEMES = {
+  cyberpunk: {
+    bg: "#000",
+    grid: "#4af1",
+    text: "#4af4",
+    prizes: [
+      { stop0: "#fff", stop4: "#4af", stop1: "#048", shadow: "#4af", empty: "#001830" }, // Major
+      { stop0: "#fff", stop4: "#ff8", stop1: "#880", shadow: "#ff4", empty: "#181800" }  // Minor
+    ],
+  PRIZES:[
+  { label:"MAJOR PRIZE", color:"#4af", row:0  },
+  { label:"MINOR PRIZE", color:"#ff4", row:4  },
+],  
+    
+    default: { stop0: "#9ff", stop5: "#5cf", stop1: "#048", shadow: "#5cf", empty: "#011" }
+  },
+        matrix: {
+    bg: "#000",
+    grid: "#0f02",
+    text: "#0f08",
+    prizes: [
+      { stop0: "#fff", stop4: "#0f0", stop1: "#040", shadow: "#0f0", empty: "#001000" }, // Major (White core)
+      { stop0: "#dfd", stop4: "#bbfb", stop1: "#040", shadow: "#0f0", empty: "#001000" }  // Minor 
+    ],
+ header: { label: "#0f08", title: "#0f0", score: "#fff" },         
+         PRIZES: [
+  { label: "MAJOR PRIZE", color: "#66ff66", row: 0 }, // bright neon green
+  { label: "MINOR PRIZE", color: "#00cc44", row: 4 }, // darker green
+],
+    default: { stop0: "#afa", stop5: "#0c0", stop1: "#020", shadow: "#0f0", empty: "#000500" }
+  },
+  // The Iconic Red Arcade Model
+  classic_red: {
+    bg: "#000",
+    grid: "#300", 
+    text: "#f008",
+    prizes: [
+     { stop0: "#fff", stop4: "#f00", stop1: "#600", shadow: "#f00", empty: "#200" }, // Major Prize
+      { stop0: "#fff", stop4: "#f00", stop1: "#600", shadow: "#f00", empty: "#200" }  // Minor Prize
+    ],
+    header: { label: "#f008", title: "#f00", score: "#fff" }, // Standard Red Stacker
+PRIZES: [
+  { label: "MAJOR PRIZE", color: "#ff5555", row: 0 }, // glowing red (top prize)
+  { label: "MINOR PRIZE", color: "#cc0000", row: 4 }, // darker red
+],    
+    default: { stop0: "#f55", stop5: "#f00", stop1: "#400", shadow: "#f00", empty: "#100" }
+  },
+         
+ // THE BLUE MODEL (Stacker Club)
+  classic_blue: {
+    bg: "#000",
+    grid: "#0244", // Semi-transparent bright blue grid
+    text: "#0ff8", // Bright Cyan text
+    prizes: [
+      { stop0: "#fff", stop4: "#0ff", stop1: "#06a", shadow: "#0ff", empty: "#001" }, // Major
+      { stop0: "#fff", stop4: "#0ff", stop1: "#06a", shadow: "#0ff", empty: "#001" }  // Minor
+    ],
+     PRIZES:[
+  { label:"MAJOR PRIZE", color:"#4af", row:0  },
+  { label:"MINOR PRIZE", color:"#ff4", row:4  },
+       ], 
+    // "Electric Blue" blocks with a pure white center for that "bright LED" look
+    default: { stop0: "#fff", stop5: "#0cf", stop1: "#006", shadow: "#0ff", empty: "#001220" },
+    header: { label: "#0ff8", title: "#0ff", score: "#fff" }, // Electric Blue Stacker
+  },        
+};
+
+
 window.addEventListener('DOMContentLoaded', async () => { 
 
   /*
@@ -407,6 +475,7 @@ class Stacker {
     this.pauseActions = false;
     this.board = [];
     this.pos = {x:0, y:ROWS-1};
+    this.currentTheme = "classic_red"
     this.dir = "r";
     this.rowLen = 3; // (user can set blocks to start with here via settings)
     this.moveInterval = 100;
@@ -1052,6 +1121,7 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
     if (this.state === STATE.ATTRACT || this.state === STATE.STARTING) {
       this._drawAttract();
     } else {
+     
       this._drawHeader();
       this._drawBoard();
       this._drawPrizeLines();
@@ -1236,114 +1306,75 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
  
   // ── Header ───────────────────────────────────────────────────
   _drawHeader() {
-    ctx.textAlign = "left";
-    ctx.font = "bold 11px 'Courier New'";
-    ctx.fillStyle = "#4af8";
-    ctx.fillText("SCORE", 8, 18);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 20px 'Courier New'";
-    ctx.fillText(String(this.score).padStart(6,"0"), 8, 38);
-   
-    ctx.textAlign = "center";
-    ctx.font = "bold 24px 'Courier New'";
-    ctx.fillStyle = "#4af";
-    ctx.shadowColor="#4af"; ctx.shadowBlur=12;
-    ctx.fillText("STACKER", CW/2, 34);
-    ctx.shadowBlur=0;
+  const g = this;
+  // Fallback to 'cyberpunk' to keep your original blue/yellow defaults active
+     if(!this.log){
+         this.log = true;  
+       
+       console.log(THEMES[this.currentTheme], this.currentTheme)
+        
+      }
+    
+  const theme = THEMES[this.currentTheme] || THEMES['cyberpunk'];
+  const h = theme.header ?? {};
+  
+  // --- Left: Score ---
+  ctx.textAlign = "left";
+  ctx.font = "bold 11px 'Courier New'";
+  // Fallback to your original light blue with alpha
+  ctx.fillStyle = h.label ?? "#4af8"; 
+  ctx.fillText("SCORE", 8, 18);
+  
+  ctx.fillStyle = h.score ?? "#fff";
+  ctx.font = "bold 20px 'Courier New'";
+  ctx.fillText(String(this.score).padStart(6, "0"), 8, 38);
+  
+  // --- Center: Title ---
+  ctx.textAlign = "center";
+  ctx.font = "bold 24px 'Courier New'";
+  // Fallback to your original solid light blue
+  const titleColor = h.title ?? "#4af";
+  ctx.fillStyle = titleColor;
+  ctx.shadowColor = titleColor; 
+  ctx.shadowBlur = 12;
+  ctx.fillText("STACKER", CW / 2, 34);
+  ctx.shadowBlur = 0;
 
-    ctx.textAlign = "right";
-    ctx.font = "bold 11px 'Courier New'";
-    ctx.fillStyle = "#4af8";
-    ctx.fillText("BEST", CW-8, 18);
-    ctx.fillStyle = "#ff4";
-    ctx.font = "bold 20px 'Courier New'";
-    ctx.fillText(String(this.highScore).padStart(6,"0"), CW-8, 38);
+  // --- Right: High Score ---
+  ctx.textAlign = "right";
+  ctx.font = "bold 11px 'Courier New'";
+  ctx.fillStyle = h.label ?? "#4af8";
+  ctx.fillText("BEST", CW - 8, 18);
+  
+  // Fallback to your original high-score yellow
+  ctx.fillStyle = h.highScore ?? "#ff4"; 
+  ctx.font = "bold 20px 'Courier New'";
+  ctx.fillText(String(this.highScore).padStart(6, "0"), CW - 8, 38);
 
-    // header separator
-    ctx.fillStyle = "#4af3";
-    ctx.fillRect(0, 42, CW, 1);
+  // --- Header Separator ---
+  ctx.fillStyle = theme.grid ?? "#4af3";
+  ctx.fillRect(0, 42, CW, 1);
 
-    // credits
-    ctx.textAlign = "center";
-    ctx.font = "10px 'Courier New'";
-    ctx.fillStyle = "#4af6";
-     if(!this.demoActive){
-    ctx.fillText(`CREDITS: ${this.credits}`, CW/2, 56);
-     }   
-     if(this.demoActive){
-       ctx.fillText(`DEMO PLAY`, CW/2, 56);
-     }
-    ctx.textAlign = "left";
+  // --- Credits / Mode ---
+  ctx.textAlign = "center";
+  ctx.font = "10px 'Courier New'";
+  ctx.fillStyle = h.label ?? "#4af6";
+  if (!this.demoActive) {
+    ctx.fillText(`CREDITS: ${this.credits}`, CW / 2, 56);
+  } else {
+    ctx.fillText(`DEMO PLAY`, CW / 2, 56);
   }
+  
+  ctx.textAlign = "left";
+}
 
   // ── Board ─────────────────────────────────────────────────────
-  _drawBoard() {
-      const THEMES = {
-  cyberpunk: {
-    bg: "#000",
-    grid: "#4af1",
-    text: "#4af4",
-    prizes: [
-      { stop0: "#fff", stop4: "#4af", stop1: "#048", shadow: "#4af", empty: "#001830" }, // Major
-      { stop0: "#fff", stop4: "#ff8", stop1: "#880", shadow: "#ff4", empty: "#181800" }  // Minor
-    ],
-  PRIZES:[
-  { label:"MAJOR PRIZE", color:"#4af", row:0  },
-  { label:"MINOR PRIZE", color:"#ff4", row:4  },
-],  
-    
-    default: { stop0: "#9ff", stop5: "#5cf", stop1: "#048", shadow: "#5cf", empty: "#011" }
-  },
-        matrix: {
-    bg: "#000",
-    grid: "#0f02",
-    text: "#0f08",
-    prizes: [
-      { stop0: "#fff", stop4: "#0f0", stop1: "#040", shadow: "#0f0", empty: "#001000" }, // Major (White core)
-      { stop0: "#dfd", stop4: "#bbfb", stop1: "#040", shadow: "#0f0", empty: "#001000" }  // Minor 
-    ],
-         PRIZES: [
-  { label: "MAJOR PRIZE", color: "#66ff66", row: 0 }, // bright neon green
-  { label: "MINOR PRIZE", color: "#00cc44", row: 4 }, // darker green
-],
-    default: { stop0: "#afa", stop5: "#0c0", stop1: "#020", shadow: "#0f0", empty: "#000500" }
-  },
-  // The Iconic Red Arcade Model
-  classic_red: {
-    bg: "#000",
-    grid: "#300", 
-    text: "#f008",
-    prizes: [
-     { stop0: "#fff", stop4: "#f00", stop1: "#600", shadow: "#f00", empty: "#200" }, // Major Prize
-      { stop0: "#fff", stop4: "#f00", stop1: "#600", shadow: "#f00", empty: "#200" }  // Minor Prize
-    ],
-    
-PRIZES: [
-  { label: "MAJOR PRIZE", color: "#ff5555", row: 0 }, // glowing red (top prize)
-  { label: "MINOR PRIZE", color: "#cc0000", row: 4 }, // darker red
-],    
-    default: { stop0: "#f55", stop5: "#f00", stop1: "#400", shadow: "#f00", empty: "#100" }
-  },
-         
- // THE BLUE MODEL (Stacker Club)
-  classic_blue: {
-    bg: "#000",
-    grid: "#0244", // Semi-transparent bright blue grid
-    text: "#0ff8", // Bright Cyan text
-    prizes: [
-      { stop0: "#fff", stop4: "#0ff", stop1: "#06a", shadow: "#0ff", empty: "#001" }, // Major
-      { stop0: "#fff", stop4: "#0ff", stop1: "#06a", shadow: "#0ff", empty: "#001" }  // Minor
-    ],
-    // "Electric Blue" blocks with a pure white center for that "bright LED" look
-    default: { stop0: "#fff", stop5: "#0cf", stop1: "#006", shadow: "#0ff", empty: "#001220" }
-  },        
-};
-     
+  _drawBoard() { 
   const g = this;
   // Ensure we at least have an empty object to prevent "cannot read property of undefined"
-  const theme = THEMES[this.currentTheme] ?? THEMES['matrix'] ?? {};
+  const theme = THEMES[this.currentTheme] || THEMES['cyberpunk'];
  
- this.currentTheme = theme;  
+// this.currentTheme = theme;  
     
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
@@ -1406,7 +1437,7 @@ PRIZES: [
 
   // ── Prize lines ───────────────────────────────────────────────
   _drawPrizeLines() {
-    for (const p of this.currentTheme.PRIZES) {
+    for (const p of THEMES[this.currentTheme].PRIZES) { 
       const y = BOARD_TOP + PAD + p.row*CELL;
       ctx.shadowColor = p.color;
       ctx.shadowBlur = 8;
