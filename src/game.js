@@ -4,7 +4,7 @@ const defaultSettings = {
   fullscreen: true, // Sync default with launch flag 
   free_play: false, // if free play is true - do not show insert credits message. 
   rotation: false,
-  grid_rows: 15,
+  grid_rows: 15, 
   grid_columns: 7,
   major_prize_row: 0, 
   minor_prize_row: 4,
@@ -26,7 +26,13 @@ const THEMES = {
   { label:"MAJOR PRIZE", color:"#4af", row:0  },
   { label:"MINOR PRIZE", color:"#ff4", row:4  },
 ],  
-    
+   fallback: {
+    hslGrid: true,
+    hueBase: 200,
+    hueStep: 15,
+    lightMin: 10,
+    lightVar: 20
+  },   
     default: { stop0: "#9ff", stop5: "#5cf", stop1: "#048", shadow: "#5cf", empty: "#011" }
   },
         matrix: {
@@ -475,7 +481,7 @@ class Stacker {
     this.pauseActions = false;
     this.board = [];
     this.pos = {x:0, y:ROWS-1};
-    this.currentTheme = "classic_red"
+    this.currentTheme = "matrix"
     this.dir = "r";
     this.rowLen = 3; // (user can set blocks to start with here via settings)
     this.moveInterval = 100;
@@ -498,7 +504,7 @@ class Stacker {
     this.brdClrInt = 15;
     this.blnkFrm = 0;
     this.minorWinBlocks = [];
-    this.particles = [];
+    this.particles = []; 
     this.attractTm = 0;
     this.attractPlays = 0;
     this.attractPhase = 3; 
@@ -1143,166 +1149,217 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
 
   // ── Attract screen ───────────────────────────────────────────
   _drawAttract() {
-    
-    /// TODO: probably improve screen when waiting for countdown in game - show visual if this.pauseActions === true override prize display phases.. (real countdown possibly.)
-    
-  
-    
-    const t = this.attractTm;
+  const g = this;
+  const t = this.attractTm;
 
-    // animated blocks demo
-    ctx.save();
-    ctx.globalAlpha = 0.25;
-    for (let y=0;y<ROWS;y++) for (let x=0;x<COLS;x++) {
-      const v = Math.sin(t/400 + x*0.8 + y*0.5)*0.5+0.5;
-      ctx.fillStyle = `hsl(${200+x*15},80%,${10+v*20}%)`;
-      ctx.fillRect(PAD+x*CELL, BOARD_TOP+PAD+y*CELL, CELL-2, CELL-2);
-    }
-    ctx.restore();
+  const theme = THEMES[this.currentTheme] ?? THEMES['classic_red'] ?? {};
+  const h = theme.header ?? {};
 
-    // logo
-    ctx.save();
-    const logoY = 40 + Math.sin(t/600)*6;
-    ctx.textAlign = "center";
-    if(!this.demoActive){
-    // glow
-    ctx.shadowColor = "#4af";
-    ctx.shadowBlur = 30;
-    ctx.font = "bold 52px 'Courier New'";
-    ctx.fillStyle = "#fff";
-    ctx.fillText("STACKER", CW/2, logoY);
- 
-    ctx.shadowBlur = 0;
-    ctx.font = "bold 13px 'Courier New'";
-    ctx.fillStyle = "#4af";
-    ctx.fillText("★  ARCADE EDITION  ★", CW/2, logoY+28);
-    } 
-    
-    if (this.pauseActions != true) {
+  // Optional theme overrides (ONLY if defined)
+  const themePrimary   = h.title ?? null;
+  const themeSecondary = h.highScore ?? null;
+  const themeGrid      = theme.grid ?? null;
+  const themeLabel     = h.label ?? null;
 
-    // prize display phases
-    ctx.font = "bold 15px 'Courier New'";
-    if (this.attractPhase === 0) {
-      ctx.fillStyle = "#ff4";
-      ctx.fillText("STACK BLOCKS TO WIN", CW/2, CH/2-20);
-      ctx.fillStyle = "#4af";
-      ctx.fillText("MAJOR  &  MINOR  PRIZES", CW/2, CH/2+10);
-    } else if (this.attractPhase === 1) {
-      ctx.fillStyle = "#4af";
-      ctx.fillText("MAJOR PRIZE", CW/2, CH/2-40);
-      ctx.fillStyle = "#fff";
-      ctx.font = "11px 'Courier New'";  
-      ctx.fillText("Reach the TOP row perfectly", CW/2, CH/2-18);
-      ctx.fillStyle = "#ff4";
-      ctx.font = "bold 15px 'Courier New'";
-      ctx.fillText("MINOR PRIZE", CW/2, CH/2+20);
-      ctx.fillStyle = "#fff";
-      ctx.font = "11px 'Courier New'";
-      ctx.fillText("Line up row 11 perfectly", CW/2, CH/2+42);
-    } else if (this.attractPhase === 2) {
-      ctx.fillStyle = "#4af";
-      ctx.fillText("HIGH SCORE", CW/2, CH/2-20);
-      ctx.fillStyle = "#ff4";
-      ctx.font = "bold 28px 'Courier New'";
-      ctx.fillText(String(this.highScore).padStart(6,"0"), CW/2, CH/2+16);
-    } else if (this.attractPhase === 3 && this.scroll && !this.scroll.done) {
-    const bmpLen = STACKER_BITMAP.length;
-    const off    = this.scroll.offset; // fractional row index into bitmap
+  const primary   = themePrimary ?? "#4af";
+  const secondary = themeSecondary ?? "#ff4";
 
-    for (let row = 0; row < ROWS; row++) {
-      // which bitmap row maps to this grid row?
-      const bmpRow = Math.floor(off + row) % bmpLen;
-      const cells  = STACKER_BITMAP[bmpRow];
+  // --- Animated Blocks Demo ---
+  ctx.save();
+  ctx.globalAlpha = 0.25;
 
-      for (let col = 0; col < COLS; col++) {
-        if (!cells) continue;
-        if (!cells[col]) continue;
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
 
-        const px = PAD + col * CELL;
-        const py = BOARD_TOP + PAD + row * CELL;
+      const v = Math.sin(t / 400 + x * 0.8 + y * 0.5) * 0.5 + 0.5;
 
-        // sub-pixel vertical blend: fade between adjacent rows
-        const frac   = (off + row) % 1;
-        const nextRow = STACKER_BITMAP[(bmpRow + 1) % bmpLen];
-        const alpha  = nextRow[col] ? 1 : (1 - frac * 0.6);
-
-        ctx.save();
-        ctx.globalAlpha = alpha * 0.55;
-        ctx.shadowColor = "#4af";
-        ctx.shadowBlur  = 14;
-        ctx.fillStyle   = "#4af";
-        ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
-        ctx.restore();
+      if (themePrimary) {
+        // THEME MODE (flat color)
+        ctx.fillStyle = themePrimary;
+        ctx.globalAlpha = 0.05 + (v * 0.15);
+      } else {
+        // ORIGINAL MODE (HSL animated grid)
+        ctx.fillStyle = `hsl(${200 + x * 15},80%,${10 + v * 20}%)`;
+        ctx.globalAlpha = 0.25;
       }
-    }
-  } else  if (this.attractPhase === 4 && this.demoActive) {
-    this._drawHeader();
-    this._drawBoard();
-    this._drawPrizeLines();
 
-    ctx.save();
-    ctx.textAlign = "center";
-
-    // Faint DEMO watermark
-    ctx.globalAlpha = 0.10;
-    ctx.font        = "bold 68px 'Courier New'";
-    ctx.fillStyle   = "#fff";
-    ctx.fillText("DEMO", CW / 2, CH / 2 + 20);
-
-    // Blinking insert-coin prompt
-    if (this.attractBlink) {
-      ctx.globalAlpha = 0.85;
-      ctx.font        = "bold 13px 'Courier New'";
-      ctx.fillStyle   = this.credits > 0 ? "#4f4" : "#fa4";
-      ctx.fillText(
-        this.credits > 0 ? "▶  PRESS  TO  PLAY  ◀" : "INSERT  COIN  [C KEY]",
-        CW / 2, CH - 14
+      ctx.fillRect(
+        PAD + x * CELL,
+        BOARD_TOP + PAD + y * CELL,
+        CELL - 2,
+        CELL - 2
       );
     }
-    ctx.restore();
-    return;
   }
-      
-   }
-    
-    
-    // blink insert/press
-    if (this.attractBlink && this.pauseActions != true) {
-      ctx.font = "bold 14px 'Courier New'";
+
+  ctx.restore();
+
+  // --- Logo ---
+  ctx.save();
+  const logoY = 40 + Math.sin(t / 600) * 6;
+  ctx.textAlign = "center";
+
+  if (!this.demoActive) {
+    ctx.shadowColor = primary;
+    ctx.shadowBlur = 30;
+
+    ctx.font = "bold 52px 'Courier New'";
+    ctx.fillStyle = "#fff";
+    ctx.fillText("STACKER", CW / 2, logoY);
+
+    ctx.shadowBlur = 0;
+    ctx.font = "bold 13px 'Courier New'";
+    ctx.fillStyle = primary;
+    ctx.fillText("★  ARCADE EDITION  ★", CW / 2, logoY + 28);
+  }
+
+  // --- Main Content Phases ---
+  if (this.pauseActions != true) {
+
+    ctx.font = "bold 15px 'Courier New'";
+
+    if (this.attractPhase === 0) {
+
+      ctx.fillStyle = secondary;
+      ctx.fillText("STACK BLOCKS TO WIN", CW / 2, CH / 2 - 20);
+
+      ctx.fillStyle = primary;
+      ctx.fillText("MAJOR  &  MINOR  PRIZES", CW / 2, CH / 2 + 10);
+
+    } else if (this.attractPhase === 1) {
+
+      ctx.fillStyle = primary;
+      ctx.fillText("MAJOR PRIZE", CW / 2, CH / 2 - 40);
+
       ctx.fillStyle = "#fff";
-      const msg = this.credits > 0 ? "▶  PRESS  TO  PLAY  ◀" : "INSERT  COIN  [C KEY]";
-      ctx.fillStyle = this.credits>0 ? "#4f4" : "#fa4";
-      ctx.fillText(msg, CW/2, CH-30);
-    } 
-     
-     if (this.attractBlink && this.pauseActions === true) {
-       
-       
-        ctx.font = "bold 14px 'Courier New'";
+      ctx.font = "11px 'Courier New'";
+      ctx.fillText("Reach the TOP row perfectly", CW / 2, CH / 2 - 18);
+
+      ctx.fillStyle = secondary;
+      ctx.font = "bold 15px 'Courier New'";
+      ctx.fillText("MINOR PRIZE", CW / 2, CH / 2 + 20);
+
       ctx.fillStyle = "#fff";
-      const msg = "GET READY";
-      ctx.fillStyle =  "#fa4";
-      ctx.fillText(msg, CW/2, CH-30);
-     }
-    
-    if (this.pauseActions === true) {
-      
-       ctx.fillStyle = "#4af";
-      ctx.fillText("COUNTDOWN", CW/2, CH/2-20);
-      ctx.fillStyle = "#ff4";
+      ctx.font = "11px 'Courier New'";
+      ctx.fillText("Line up row 11 perfectly", CW / 2, CH / 2 + 42);
+
+    } else if (this.attractPhase === 2) {
+
+      ctx.fillStyle = primary;
+      ctx.fillText("HIGH SCORE", CW / 2, CH / 2 - 20);
+
+      ctx.fillStyle = secondary;
       ctx.font = "bold 28px 'Courier New'";
-      ctx.fillText(this.countDownTimer, CW/2, CH/2+16);
-      
-      
-      
+      ctx.fillText(String(this.highScore).padStart(6, "0"), CW / 2, CH / 2 + 16);
+
+    } else if (this.attractPhase === 3 && this.scroll && !this.scroll.done) {
+
+      const bmpLen = STACKER_BITMAP.length;
+      const off = this.scroll.offset;
+
+      for (let row = 0; row < ROWS; row++) {
+
+        const bmpRow = Math.floor(off + row) % bmpLen;
+        const cells = STACKER_BITMAP[bmpRow];
+
+        for (let col = 0; col < COLS; col++) {
+
+          if (!cells || !cells[col]) continue;
+
+          const px = PAD + col * CELL;
+          const py = BOARD_TOP + PAD + row * CELL;
+
+          const frac = (off + row) % 1;
+          const nextRow = STACKER_BITMAP[(bmpRow + 1) % bmpLen];
+          const alpha = nextRow[col] ? 1 : (1 - frac * 0.6);
+
+          ctx.save();
+          ctx.globalAlpha = alpha * 0.55;
+          ctx.shadowColor = primary;
+          ctx.shadowBlur = 14;
+          ctx.fillStyle = primary;
+
+          ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
+          ctx.restore();
+        }
+      }
+
+    } else if (this.attractPhase === 4 && this.demoActive) {
+
+      this._drawHeader();
+      this._drawBoard();
+      this._drawPrizeLines();
+
+      ctx.save();
+      ctx.textAlign = "center";
+
+      ctx.globalAlpha = 0.10;
+      ctx.font = "bold 68px 'Courier New'";
+      ctx.fillStyle = "#fff";
+      ctx.fillText("DEMO", CW / 2, CH / 2 + 20);
+
+      if (this.attractBlink) {
+        ctx.globalAlpha = 0.85;
+        ctx.font = "bold 13px 'Courier New'";
+
+        ctx.fillStyle = this.credits > 0 ? "#4f4" : "#fa4";
+
+        ctx.fillText(
+          this.credits > 0
+            ? "▶  PRESS  TO  PLAY  ◀"
+            : "INSERT  COIN  [C KEY]",
+          CW / 2,
+          CH - 14
+        );
+      }
+
+      ctx.restore();
+      return;
     }
-
-    ctx.font = "11px 'Courier New'";
-    ctx.fillStyle = "#4af6";
-    ctx.fillText(`CREDITS: ${this.credits}`, CW/2, CH-10);
-
-    ctx.restore();
   }
+
+  // --- Blink Logic ---
+  if (this.attractBlink && this.pauseActions != true) {
+    ctx.font = "bold 14px 'Courier New'";
+    ctx.textAlign = "center";
+
+    const msg = this.credits > 0
+      ? "▶  PRESS  TO  PLAY  ◀"
+      : "INSERT  COIN  [C KEY]";
+
+    ctx.fillStyle = this.credits > 0 ? "#4f4" : "#fa4";
+    ctx.fillText(msg, CW / 2, CH - 30);
+  }
+
+  if (this.attractBlink && this.pauseActions === true) {
+    ctx.font = "bold 14px 'Courier New'";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#fa4";
+    ctx.fillText("GET READY", CW / 2, CH - 30);
+  }
+
+  // --- Countdown ---
+  if (this.pauseActions === true) {
+    ctx.textAlign = "center";
+
+    ctx.fillStyle = primary;
+    ctx.font = "bold 15px 'Courier New'";
+    ctx.fillText("COUNTDOWN", CW / 2, CH / 2 - 20);
+
+    ctx.fillStyle = secondary;
+    ctx.font = "bold 28px 'Courier New'";
+    ctx.fillText(this.countDownTimer, CW / 2, CH / 2 + 16);
+  }
+
+  // --- Credits Footer ---
+  ctx.textAlign = "center";
+  ctx.font = "11px 'Courier New'";
+
+  ctx.fillStyle = themeLabel ?? "#4af6";
+  ctx.fillText(`CREDITS: ${this.credits}`, CW / 2, CH - 10);
+
+  ctx.restore();
+}
  
   // ── Header ───────────────────────────────────────────────────
   _drawHeader() {
