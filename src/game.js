@@ -1076,30 +1076,7 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
     
     /// TODO: probably improve screen when waiting for countdown in game - show visual if this.pauseActions === true override prize display phases.. (real countdown possibly.)
     
- 
-const d = this.demo;
-if (d && d.cells) {
-  // Draw all locked + active demo cells on top of the faded background
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      if (d.cells[row][col] === 1) {
-        const px = PAD + col * CELL;
-        const py = BOARD_TOP + PAD + row * CELL;
-
-        // Prize-row colours match the real board
-        let color = "#4af";
-        if (row === PRIZES[0].row) color = "#4af";
-        else if (row === PRIZES[1].row) color = "#ff4";
-
-        ctx.shadowColor = color;
-        ctx.shadowBlur  = 10;
-        ctx.fillStyle   = color;
-        ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
-        ctx.shadowBlur = 0;
-      }
-    }
-  }
-}
+  
     
     const t = this.attractTm;
 
@@ -1129,7 +1106,7 @@ if (d && d.cells) {
     ctx.font = "bold 13px 'Courier New'";
     ctx.fillStyle = "#4af";
     ctx.fillText("★  ARCADE EDITION  ★", CW/2, logoY+28);
-    }
+    } 
     
     if (this.pauseActions != true) {
 
@@ -1301,58 +1278,100 @@ if (d && d.cells) {
 
   // ── Board ─────────────────────────────────────────────────────
   _drawBoard() {
-    const g = this;
-    for (let y=0;y<ROWS;y++) {
-      for (let x=0;x<COLS;x++) {
-        const px = PAD + x*CELL;
-        const py = BOARD_TOP + PAD + y*CELL;
-        const on = g.board[y][x]===1;
-        if (on) {
-          // radial gradient for lit block
-          const cx2 = px+CELL/2, cy2=py+CELL/2;
-          const grd = ctx.createRadialGradient(cx2,cy2,2,cx2,cy2,CELL*0.7);
-          // different colours for prize rows
-          if (y === PRIZES[0].row) {
-            grd.addColorStop(0,"#fff");
-            grd.addColorStop(0.4,"#4af");
-            grd.addColorStop(1,"#048");
-          } else if (y === PRIZES[1].row) {
-            grd.addColorStop(0,"#fff");
-            grd.addColorStop(0.4,"#ff8");
-            grd.addColorStop(1,"#880");
-          } else {
-            grd.addColorStop(0,"#9ff");
-            grd.addColorStop(0.5,"#5cf");
-            grd.addColorStop(1,"#048");
-          }
-          ctx.fillStyle = grd;
-          // glow
-          ctx.shadowColor = y===PRIZES[0].row?"#4af":y===PRIZES[1].row?"#ff4":"#5cf";
-          ctx.shadowBlur = 12;
-        } else {
-          ctx.fillStyle = y===PRIZES[0].row?"#001830":y===PRIZES[1].row?"#181800":"#011";
-          ctx.shadowBlur = 0;
-        }
-        ctx.fillRect(px+1, py+1, CELL-3, CELL-3);
-        ctx.shadowBlur = 0;
+      const THEMES = {
+  cyberpunk: {
+    bg: "#000",
+    grid: "#4af1",
+    text: "#4af4",
+    prizes: [
+      { stop0: "#fff", stop4: "#4af", stop1: "#048", shadow: "#4af", empty: "#001830" }, // Major
+      { stop0: "#fff", stop4: "#ff8", stop1: "#880", shadow: "#ff4", empty: "#181800" }  // Minor
+    ],
+    default: { stop0: "#9ff", stop5: "#5cf", stop1: "#048", shadow: "#5cf", empty: "#011" }
+  },
+  emerald: {
+    bg: "#081820",
+    grid: "#30623055",
+    text: "#8bac0f88",
+    prizes: [
+      { stop0: "#9bbc0f", stop4: "#8bac0f", stop1: "#306230", shadow: "#9bbc0f", empty: "#0f380f" },
+      { stop0: "#9bbc0f", stop4: "#8bac0f", stop1: "#306230", shadow: "#9bbc0f", empty: "#0f380f" }
+    ],
+  },
+        matrix: {
+    bg: "#000",
+    grid: "#0f02",
+    text: "#0f08",
+    prizes: [
+      { stop0: "#fff", stop4: "#0f0", stop1: "#040", shadow: "#0f0", empty: "#001000" }, // Major (White core)
+      { stop0: "#dfd", stop4: "#bbfb", stop1: "#040", shadow: "#0f0", empty: "#001000" }  // Minor
+    ],
+    default: { stop0: "#afa", stop5: "#0c0", stop1: "#020", shadow: "#0f0", empty: "#000500" }
+  }
+};
+    
+  const g = this;
+  // Ensure we at least have an empty object to prevent "cannot read property of undefined"
+  const theme = THEMES[this.currentTheme] ?? THEMES['matrix'] ?? {};
 
-        // grid lines on empty cells
-        if (!on) {
-          ctx.strokeStyle = "#4af1";
-          ctx.lineWidth = 0.5;
-          ctx.strokeRect(px+1, py+1, CELL-3, CELL-3);
-        }
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const px = PAD + x * CELL;
+      const py = BOARD_TOP + PAD + y * CELL;
+      const on = g.board[y][x] === 1;
+
+      // 1. Get the raw style object, or fall back to theme.default
+      let style;
+      if (y === PRIZES[0].row) style = theme.prizes?.[0];
+      else if (y === PRIZES[1].row) style = theme.prizes?.[1];
+      
+      // If style is still undefined (missing prize index), use default. 
+      // If default is missing, use an empty object.
+      style = style ?? theme.default ?? {};
+
+      if (on) {
+        const cx2 = px + CELL / 2, cy2 = py + CELL / 2;
+        const grd = ctx.createRadialGradient(cx2, cy2, 2, cx2, cy2, CELL * 0.7);
+        
+        // Use ?? to provide hard fallbacks for every specific color
+        grd.addColorStop(0, style.stop0 ?? "#fff");
+        grd.addColorStop(0.4, style.stop4 ?? style.stop5 ?? "#4af");
+        grd.addColorStop(1, style.stop1 ?? "#048");
+
+        ctx.fillStyle = grd;
+        ctx.shadowColor = style.shadow ?? "#4af";
+        ctx.shadowBlur = 12;
+      } else {
+        ctx.fillStyle = style.empty ?? "#011";
+        ctx.shadowBlur = 0;
+      }
+
+      ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
+      ctx.shadowBlur = 0;
+
+      if (!on) {
+        ctx.strokeStyle = theme.grid ?? "#4af1";
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(px + 1, py + 1, CELL - 3, CELL - 3);
       }
     }
-    // row number hint (small)
-    ctx.font = "8px 'Courier New'";
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#4af4";
-    for (let y=0;y<ROWS;y++) {
-      ctx.fillText(y, PAD-1, BOARD_TOP+PAD+y*CELL+CELL/2+3);
-    }
-    ctx.textAlign = "left";
   }
+
+  // Row number hints
+  ctx.font = "8px 'Courier New'";
+  ctx.textAlign = "right";
+  ctx.fillStyle = theme.text ?? "#4af4";
+  for (let y = 0; y < ROWS; y++) {
+    ctx.fillText(y, PAD - 1, BOARD_TOP + PAD + y * CELL + CELL / 2 + 3);
+  }
+  ctx.textAlign = "left";
+}
+  
+  
+  toggleTheme(theme) {
+    this.currentTheme = theme
+    this._drawBoard(); // Redraw immediately
+}
 
   // ── Prize lines ───────────────────────────────────────────────
   _drawPrizeLines() {
