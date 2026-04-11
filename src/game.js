@@ -10,12 +10,12 @@ const defaultSettings = {
   minor_prize_row: 4,
   sfx_path: "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004",
   electron_menu_bar: true, // set to false for debugging.,
-  credits_required:1,
+  credits_required:0,
 };
 
 const THEMES = {
   cyberpunk: {
-    bg: "#000",
+    bg: "#000814",
     grid: "#4af1",
     text: "#4af4",
     prizes: [
@@ -473,7 +473,7 @@ async function setHighscore(score){
     this.startTime = Date.now();
   }
 }
-  
+   
 const HIGHSCORE = await getHighscore();
 class Stacker {
   constructor(creditsRequired=1) {
@@ -481,15 +481,15 @@ class Stacker {
     this.pauseActions = false;
     this.board = [];
     this.pos = {x:0, y:ROWS-1};
-    this.currentTheme = "matrix"
+    this.currentTheme = "cyberpunk"
     this.dir = "r";
     this.rowLen = 3; // (user can set blocks to start with here via settings)
     this.moveInterval = 100;
     this.mvTm = 0;
     this.placeTime = 0;
-    this.plcInt = 250;
+    this.plcInt = 250; 
     this.plcTmSt = 0;
-    this.credits_required = creditsRequired;
+    this.credits_required = creditsRequired;  
     this.mssLps = 3;
     this.mnrPrzLps = 3;
     this.blocksDropped = [];
@@ -532,9 +532,9 @@ class Stacker {
   insertCoin() {
     this.credits++;
     sfx.play("coin");
-    fireEvent("insertcoin", { credits: this.credits });
+    fireEvent("insertcoin", { credits: this.credits }); 
     this._flash("CREDIT " + this.credits);
-    this._draw();
+    this._draw(); 
   if(this.state === STATE.ATTRACT) {
     if(this.credits >= this.credits_required && this.pauseActions != true ||   this.credits_required === 0 && this.pauseActions != true){
     // Stop everything EXCEPT keep "music" resumable 
@@ -559,16 +559,17 @@ class Stacker {
     });
   
     document.addEventListener("keydown", async (e) => {     
-      const ACTION_KEYS = ["NumpadEnter", "Enter", "ArrowDown", "Space"]
-      
-      if (ACTION_KEYS.includes(e.code)) {
+      const ACTION_KEYS = {main_button:["NumpadEnter", "Enter"], continue_btn:["Space"], coin_insert:["KeyC"]}
+       
+      if (ACTION_KEYS.main_button.includes(e.code)) {
         e.preventDefault();
         await this._action();
         if(this.state === STATE.ATTRACT){
           sfx.play("place");
         }; 
       } 
-      if (e.code === "KeyC") {
+      
+      if (ACTION_KEYS.coin_insert.includes(e.code)) {
         this.insertCoin();
       }
     });
@@ -584,18 +585,20 @@ class Stacker {
   }
   
   async _action(e) {
- 
    if (this.demoActive) {
       this._stopDemo();
+      
     }
     if(this.pauseActions === true){
      return;
     }
     if (this.state === STATE.ATTRACT) {
-      if (this.credits > 0) {
+      if (this.credits > 0 || this.credits_required === 0) {
+        if(this.credits_required != 0){
         this.credits--;
+        } 
         await this._startGame();
-      } else {
+      } else { 
         this._flash("INSERT COIN  [C KEY]");  
       }
       return;
@@ -885,6 +888,7 @@ _simulatePlay(dt) {
   
    if (this.state === STATE.ATTRACT || this.state === STATE.STARTING) {
   this._updateAttract(dt);
+     
 }
 else if (this.state === STATE.PLAYING) {
   this._updatePlaying(dt);
@@ -1151,10 +1155,11 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
   _drawAttract() {
   const g = this;
   const t = this.attractTm;
-
+ 
   const theme = THEMES[this.currentTheme] ?? THEMES['classic_red'] ?? {};
   const h = theme.header ?? {};
-
+ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
+  ctx.fillRect(0, 0, CW, BOARD_TOP);  // This fills the space "behind" the logo
   // Optional theme overrides (ONLY if defined)
   const themePrimary   = h.title ?? null;
   const themeSecondary = h.highScore ?? null;
@@ -1210,7 +1215,7 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
     ctx.shadowBlur = 0;
     ctx.font = "bold 13px 'Courier New'";
     ctx.fillStyle = primary;
-    ctx.fillText("★  ARCADE EDITION  ★", CW / 2, logoY + 28);
+    ctx.fillText("★  ARCADE EDITION  ★", CW / 2, logoY + 28); 
   }
 
   // --- Main Content Phases ---
@@ -1303,9 +1308,10 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
         ctx.font = "bold 13px 'Courier New'";
 
         ctx.fillStyle = this.credits > 0 ? "#4f4" : "#fa4";
-
+ 
+        
         ctx.fillText(
-          this.credits > 0
+          this.credits > 0 || this.credits_required === 0
             ? "▶  PRESS  TO  PLAY  ◀"
             : "INSERT  COIN  [C KEY]",
           CW / 2,
@@ -1323,7 +1329,7 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
     ctx.font = "bold 14px 'Courier New'";
     ctx.textAlign = "center";
 
-    const msg = this.credits > 0
+    const msg = this.credits > 0 || this.credits_required === 0
       ? "▶  PRESS  TO  PLAY  ◀"
       : "INSERT  COIN  [C KEY]";
 
@@ -1349,18 +1355,49 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
     ctx.fillStyle = secondary;
     ctx.font = "bold 28px 'Courier New'";
     ctx.fillText(this.countDownTimer, CW / 2, CH / 2 + 16);
-  }
+    this._drawBitmapOnGrid([
+  [1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0],
+  [1,0,0,0,0,0,0],
+  [1,1,1,1,1,1,0],
+  [0,0,0,0,0,0,1],
+  [0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,0],
+  // ... pad to 15 rows if needed
+])
+  }  
 
   // --- Credits Footer ---
   ctx.textAlign = "center";
   ctx.font = "11px 'Courier New'";
 
   ctx.fillStyle = themeLabel ?? "#4af6";
+  if(this.credits_required != 0){  
   ctx.fillText(`CREDITS: ${this.credits}`, CW / 2, CH - 10);
+  }
+    
+  if(this.credits_required === 0){  
+  ctx.fillText(`FREE PLAY`, CW / 2, CH - 10);
+  }  
 
   ctx.restore();
 }
  
+  
+ _drawBitmapOnGrid(bitmap, color = "#4af", alpha = 0.85, glow = 14) {
+  for (let row = 0; row < bitmap.length && row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      if (!bitmap[row][col]) continue;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = glow;
+      ctx.fillStyle   = color;
+      ctx.fillRect(PAD + col * CELL + 1, BOARD_TOP + PAD + row * CELL + 1, CELL - 3, CELL - 3);
+      ctx.restore();
+    }
+  }
+}
   // ── Header ───────────────────────────────────────────────────
   _drawHeader() {
   const g = this;
