@@ -170,6 +170,14 @@ const SFX_MAP = {
   vo_woohoo: "/clusfvoj/107. Voice - Whooo.mp3"
 }; 
   
+   function stopRowBlockSounds() {
+    const keys = ["blockMoving_1"];
+
+    keys.forEach(key => {
+      sfx.stop(key);
+    });
+  } 
+  
 class SoundManager {
   constructor() {
     this._cache = {};
@@ -663,7 +671,7 @@ class Stacker {
     const g = this;
     if (g.placeTime !== 0) return;
     if (g.board[g.pos.y].indexOf(1) === -1) return;
-
+    stopRowBlockSounds();
     let missed = 0;
     const losDff = 0 - g.pos.x;
     const rosDff = (g.pos.x + g.rowLen) - COLS;
@@ -745,14 +753,12 @@ class Stacker {
     } else {
       g.blnkFrm = 0;
       
-      function stopRowBlockSounds(key){
-        sfx.stop(key)
-      }
+
       
       if (g.rowLen === 0) {
         // lose
         sfx.play("gameOver");
-        stopRowBlockSounds("blockMoving_1");
+        stopRowBlockSounds();
         sfx.play("vo_ohNo");
         fireEvent("gameover", { win:false, score: this.score });
         this._drawGameoverOverlay()
@@ -1008,15 +1014,15 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
 
 const isPlaying = a && !a.paused && !a.ended;        
         
-if (a && a.ended) {
+if (a && a.ended && !this.demoActive) {
   sfx.play('blockMoving_1')
 }
         
- if (!isPlaying){
+ if (!isPlaying && !this.demoActive){
   sfx.play('blockMoving_1')
 } 
         if (g.pos.y === 14 && !g.hasVoiceLinePlayed['vo_careful']){   
-                                                                    g.hasVoiceLinePlayed['vo_careful'] = true;
+                                                                     g.hasVoiceLinePlayed['vo_careful'] = true;
           sfx.play("vo_careful");
               }
          
