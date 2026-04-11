@@ -2,15 +2,10 @@ const defaultSettings = {
   sound_enabled: true,
   highscore: 0,
   fullscreen: true, // Sync default with launch flag 
-  free_play: false, // if free play is true - do not show insert credits message. 
   rotation: false,
-  grid_rows: 15, 
-  grid_columns: 7,
-  major_prize_row: 0, 
-  minor_prize_row: 4,
   sfx_path: "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004",
   electron_menu_bar: true, // set to false for debugging.,
-  credits_required:0,
+  credits_required:0, // if credits_required is less than 0 - freeplay enabled.. 
 };
 
 const THEMES = {
@@ -153,6 +148,7 @@ const SFX_MAP = {
   tick:         "/rewtdmar/062. SFX - Tick tock (Loop).mp3",
   attract_mode_sfx:"/kimknlrc/043. SFX - Attract mode sound.mp3",
   attract_mode_sfx2:"/ikcertto/044. SFX - Attraction.mp3",
+  blockMoving_1:"/dnehzaeu/017. Music - Stacker - 1 Block Moving 1.mp3",
   vo_careful:   "/pakwefph/066. Voice - Careful.mp3",
   vo_getTop:    "/ogrotdig/075. Voice - Get to the top.mp3",
   vo_takeMeToTop:    "/qadrwkku/099. Voice - Take me to the top.mp3",
@@ -201,20 +197,22 @@ class SoundManager {
       const a = new Audio(path);
       a.preload = "auto";
       a.load();
-
+ 
       this._cache[key] = a;
     }
     return this._cache[key];
   }
 
-  play(key, loop = false) {
+  play(key, loop = false, rate = null) {
     if (!SOUND_ENABLED) return;
 
     const a = this._load(key);
     if (!a) return;
 
     a.loop = loop;
-
+    if(rate){
+      a.playbackRate = rate;
+    }
     // resume if position exists, otherwise start fresh
     a.currentTime = this._positions[key] || 0;
 
@@ -746,9 +744,15 @@ class Stacker {
       else if (g.pos.x <= 0-(g.rowLen-1))      g.dir = "r";
     } else {
       g.blnkFrm = 0;
+      
+      function stopRowBlockSounds(key){
+        sfx.stop(key)
+      }
+      
       if (g.rowLen === 0) {
         // lose
         sfx.play("gameOver");
+        stopRowBlockSounds("blockMoving_1");
         sfx.play("vo_ohNo");
         fireEvent("gameover", { win:false, score: this.score });
         this._drawGameoverOverlay()
@@ -994,11 +998,23 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
         g.mvTm = g.moveInterval;
         // voice lines at key rows (new row started)
         if (g.pos.y === 1 && !g.hasVoiceLinePlayed['vo_lastBlock']){          //sfx.play("vo_lastBlock");
-                                                    g.hasVoiceLinePlayed['vo_lastBlock'] = true;
+                                         
+          
+          g.hasVoiceLinePlayed['vo_lastBlock'] = true;
          }
       
         
+        const a = sfx._cache["blockMoving_1"];
+
+const isPlaying = a && !a.paused && !a.ended;        
         
+if (a && a.ended) {
+  sfx.play('blockMoving_1')
+}
+        
+ if (!isPlaying){
+  sfx.play('blockMoving_1')
+} 
         if (g.pos.y === 14 && !g.hasVoiceLinePlayed['vo_careful']){   
                                                                     g.hasVoiceLinePlayed['vo_careful'] = true;
           sfx.play("vo_careful");
