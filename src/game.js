@@ -149,6 +149,7 @@ const SFX_MAP = {
   attract_mode_sfx:"/kimknlrc/043. SFX - Attract mode sound.mp3",
   attract_mode_sfx2:"/ikcertto/044. SFX - Attraction.mp3",
   blockMoving_1:"/dnehzaeu/017. Music - Stacker - 1 Block Moving 1.mp3",
+  blockMoving_3:"/apwofkjr/037. Music - Stacker - 3 Blocks Moving 1.mp3",
   vo_careful:   "/pakwefph/066. Voice - Careful.mp3",
   vo_getTop:    "/ogrotdig/075. Voice - Get to the top.mp3",
   vo_takeMeToTop:    "/qadrwkku/099. Voice - Take me to the top.mp3",
@@ -171,7 +172,7 @@ const SFX_MAP = {
 }; 
   
    function stopRowBlockSounds() {
-    const keys = ["blockMoving_1"];
+    const keys = ["blockMoving_3", "blockMoving_1"];
 
     keys.forEach(key => {
       sfx.stop(key);
@@ -697,14 +698,16 @@ class Stacker {
 
       g.rowLen -= missed;
        
-      if(g.rowLen != 0 && missed != 0){
-        sfx.play("blockFall");
-      }
+     
       
      
       
     }
   
+     if(g.rowLen != 0 && missed != 0){
+        sfx.play("blockFall");
+      }
+     
       // play woo unless first row (same as arcade game)
       if(g.pos.y != 14 && g.rowLen != 0 && missed === 0){
         sfx.play("vo_woohoo");
@@ -1008,18 +1011,32 @@ if (this.attractPhase === 0 && this.attractTm < 100) {
           
           g.hasVoiceLinePlayed['vo_lastBlock'] = true;
          }
-      
         
-        const a = sfx._cache["blockMoving_1"];
+        if(!this.currentBlockSound){
+        this.currentBlockSound = "blockMoving_3";
+        };
+        
+        const a = sfx._cache[this.currentBlockSound];
 
 const isPlaying = a && !a.paused && !a.ended;        
         
 if (a && a.ended && !this.demoActive) {
-  sfx.play('blockMoving_1')
+ // sfx.play('blockMoving_3')
 }
         
  if (!isPlaying && !this.demoActive){
-  sfx.play('blockMoving_1')
+ const ROW_LEVEL = g.pos.y;  
+   
+ if(ROW_LEVEL >= 10){  
+   this.currentBlockSound = "blockMoving_3";
+  sfx.play('blockMoving_3', true, 1)
+ }
+    
+ if (ROW_LEVEL >= 7 && ROW_LEVEL <= 9) {
+   this.currentBlockSound = 'blockMoving_1'
+   sfx.play('blockMoving_1', true, 1)
+ }    
+   
 } 
         if (g.pos.y === 14 && !g.hasVoiceLinePlayed['vo_careful']){   
                                                                      g.hasVoiceLinePlayed['vo_careful'] = true;
