@@ -71,7 +71,7 @@ jobs:
 
       # --- Copy game output into website dist ---
       - name: Copy game.html into website dist 📋
-        run: cp dist/game.html website/dist/game.html
+        run: cp dist/game.html website/dist/play-stackers.html
 
       # --- Deploy ---
       - name: Deploy 🚀
