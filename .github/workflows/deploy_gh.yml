@@ -6,43 +6,57 @@ on:
       - main
 
 permissions:
-  contents: write  # Crucial: allows pushing to the gh-pages branch 
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      - name: Ensure Lockfile exists 🛠️
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # --- Build game (outputs to dist/game.html at repo root) ---
+      - name: Ensure root lockfile exists 🛠️
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm i --package-lock-only
+          fi
+
+      - name: Install root dependencies 🔧
+        run: npm install
+
+      - name: Build game 🎮
+        run: npx webpack --config ./src/webpack.config.js
+
+      # --- Build website ---
+      - name: Ensure website lockfile exists 🛠️
         run: |
           if [ ! -f package-lock.json ]; then
             npm i --package-lock-only
           fi
         working-directory: website
 
-      - name: Setup Node.js ⚙️
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: website/package-lock.json
-
-      - name: Install dependencies 🔧
+      - name: Install website dependencies 🔧
         run: npm install
         working-directory: website
 
-      - name: Build project 🏗️
+      - name: Build website 🏗️
         run: npm run build:ghpages
         working-directory: website
 
+      # --- Copy game output into website dist ---
+      - name: Copy game.html into website dist 📋
+        run: cp dist/game.html website/dist/game.html
+
+      # --- Deploy ---
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: website/dist  # Where Webpack put the files
-          branch: gh-pages      # The branch it will push to
-          clean: true           # Automatically remove old files from gh-pages
-          env:
-          NODE_ENV: production # This ensures Tailwind v4 optimizes the output
+          folder: website/dist
+          branch: gh-pages
+          clean: true
