@@ -1,4 +1,4 @@
-name: Build and Publish Electron App
+name: Build and Publish Stackers Game
 
 on:
   push:
@@ -38,6 +38,22 @@ jobs:
           else
             npm run build:exe
           fi
+        shell: bash
+
+
+      # Generate the ESM Library from CommonJS source
+      - name: Build ESM Library
+        run: npm run build:library
+
+      # Commit the ESM bundle (Only runs on Linux to avoid duplicates)
+      - name: Commit ESM Library
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add dist/game.js
+          # Only commit if there are changes to avoid workflow failure
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update esm library bundle [skip ci]" && git push)
         shell: bash
 
       # ✅ Upload to a single release (This action handles the release creation)
