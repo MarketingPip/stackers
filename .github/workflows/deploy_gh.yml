@@ -36,6 +36,7 @@ jobs:
           if [ -f package-lock.json ]; then
             npm ci
           else
+            npm install lucide 
             npm install
           fi
 
