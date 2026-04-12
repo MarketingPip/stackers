@@ -20,7 +20,13 @@ module.exports = (env, argv) => {
           test: /\.css$/i,
           use: [
             isProd ? MiniCssExtractPlugin.loader : 'style-loader',
-            'css-loader',
+             {
+              loader: 'css-loader',
+              options: {
+                import: false,   // Tailwind handles @import
+                url: false,      // don't rewrite urls
+              },
+            },
             '@tailwindcss/webpack'
             // postcss-loader removed — @tailwindcss/webpack handles this
           ],
