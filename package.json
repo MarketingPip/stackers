@@ -7,6 +7,7 @@
     "scripts": {
         "build:library": "esbuild ./src/game.js --bundle --format=esm --outfile=dist/game.js",
         "build:ghpages": "webpack --config ./website/webpack.config.js",
+        "build:main": "esbuild ./src/electron.js --bundle --platform=node --format=cjs --outfile=dist/main.js --external:electron",
         "build:exe": "webpack --config ./src/webpack.config.js  && electron-builder"
     },
     "devDependencies": {
