@@ -1,4 +1,4 @@
-name: Deploy Website to GitHub Pages 
+name: Deploy Website to GitHub Pages
 
 on:
   push:
@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
@@ -15,68 +17,50 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ⚙️
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      # --- Build game (outputs to dist/game.html at repo root) ---
       - name: Ensure root lockfile exists 🛠️
         run: |
           if [ ! -f package-lock.json ]; then
             npm i --package-lock-only
           fi
 
-      - name: Install root dependencies 🔧
-        run: npm install
+      # 1. Build the Webpack Game
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
-      # ✅ Manual install (fixed formatting + no duplicates)
-      - name: Install dependencies (Linux)
+      - name: Install dependencies and Build Game 🎮
         run: |
-          npm install --save-dev \
-            webpack \
-            webpack-cli \
-            webpack-dev-server \
-            html-webpack-plugin \
-            mini-css-extract-plugin \
-            css-loader \
-            style-loader \
-            postcss \
-            postcss-loader \
-            tailwindcss \
-            autoprefixer \
-            html-inline-css-webpack-plugin \
-            html-inline-script-webpack-plugin \
-            html-loader
-        if: matrix.os == 'ubuntu-latest'
+          npm install
+          npx webpack --config ./src/webpack.config.js
 
-      - name: Build game 🎮
-        run: npx webpack --config ./src/webpack.config.js
+      # 2. Build the Jekyll Site
+      - name: Setup Ruby 💎
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: website
 
-      # --- Build website ---
-      - name: Ensure website lockfile exists 🛠️
+      - name: Build Website with Jekyll 🏗️
         run: |
-          if [ ! -f package-lock.json ]; then
-            npm i --package-lock-only
-          fi
-        working-directory: website
+          # Move game output into Jekyll source folder
+          mkdir -p website/
+          cp dist/game.html website/play-stackers.html
+          
+          cd website
+          # Ensure Jekyll knows the production URL (use your repo name)
+          bundle exec jekyll build
+        env:
+          JEKYLL_ENV: production
 
-      - name: Install website dependencies 🔧
-        run: npm install
-        working-directory: website
-
-      - name: Build website 🏗️
-        run: npm run build:ghpages
-        working-directory: website
-
-      # --- Copy game output into website dist ---
-      - name: Copy game.html into website dist 📋
-        run: cp dist/game.html website/dist/play-stackers.html
-
-      # --- Deploy ---
+      - name: Create .nojekyll file 📄
+        run: touch website/_site/.nojekyll
+      # 3. Deploy to the gh-pages branch
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: website/dist
+          folder: website/_site
           branch: gh-pages
           clean: true
