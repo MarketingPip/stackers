@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: 20
 
-      # 1. Build the Game (Root)
+      # 1. Build the Game
       - name: Build Game 🎮
         run: |
           npm install
@@ -41,21 +41,28 @@ jobs:
           npm install
           npm run build:ghpages
 
-      # 3. PREPARE: Move files into the Jekyll source folder
-      # This ensures Jekyll "sees" them when the container starts
-      - name: Prepare Jekyll Source 📋
+      # 3. Create Clean Staging & Force Jekyll Processing
+      - name: Prepare Final Files 📂
         run: |
-          cp dist/game.html website/play-stackers.html
+          mkdir final_site
+          
+          # Move only what you want
+          cp dist/game.html final_site/play-stackers.html
+          cp -r website/dist/* final_site/
+          
+          # CRITICAL: Jekyll ignores variables in .html files unless they have Front Matter.
+          # This command prepends "---" to the top of every .html file in the folder.
+          sed -i '1i ---\n---' final_site/*.html
 
       # 4. Build with Jekyll (Official Action)
       - name: Build with Jekyll 💎
         uses: actions/jekyll-build-pages@v1
         with:
-          # Tell Jekyll that the site lives in the 'website' folder
-          source: ./website/
+          # We point Jekyll ONLY to the clean folder
+          source: ./final_site/
           destination: ./_site
 
-      # 5. Upload & Deploy
+      # 5. Upload artifact
       - name: Upload artifact 🚀
         uses: actions/upload-pages-artifact@v3
 
@@ -64,8 +71,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages 🚀
-        id: deployment
         uses: actions/deploy-pages@v4
