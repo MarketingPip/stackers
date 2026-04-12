@@ -5,10 +5,8 @@
     "main": "src/electron.js",
     "author": "MarketingPipeline",
     "scripts": {
-        "start": "electron .",
-        "build:browser": "esbuild main.js --bundle --format=esm --outfile=dist/main.js",
+        "build:library": "esbuild ./src/game.js --bundle --format=esm --outfile=dist/game.js",
         "build:ghpages": "webpack --config ./website/webpack.config.js",
-        "deploy": "npm run build:ghpages && gh-pages -d dist",
         "build:exe": "webpack --config ./src/webpack.config.js  && electron-builder"
     },
     "devDependencies": {
