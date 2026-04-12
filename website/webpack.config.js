@@ -1,19 +1,18 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const TailwindPlugin = require('@tailwindcss/webpack');
 
 module.exports = (env, argv) => {
   const isProd = argv.mode === 'production';
- 
+
   return {
     entry: path.resolve(__dirname, 'js/main.js'),
-
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'bundle.[contenthash].js',
       clean: true,
     },
-
     devtool: isProd ? false : 'source-map',
     module: {
       rules: [
@@ -22,7 +21,7 @@ module.exports = (env, argv) => {
           use: [
             isProd ? MiniCssExtractPlugin.loader : 'style-loader',
             'css-loader',
-            'postcss-loader',
+            // postcss-loader removed — @tailwindcss/webpack handles this
           ],
         },
         {
@@ -31,13 +30,12 @@ module.exports = (env, argv) => {
         },
       ],
     },
-
     resolve: {
-  modules: [path.resolve(__dirname, 'node_modules'), 'node_modules'],
-  extensions: ['.js', '.json', '.wasm'],
-},
-
+      modules: [path.resolve(__dirname, 'node_modules'), 'node_modules'],
+      extensions: ['.js', '.json', '.wasm'],
+    },
     plugins: [
+      new TailwindPlugin(),
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, 'pages/index.html'),
       }),
@@ -45,7 +43,6 @@ module.exports = (env, argv) => {
         filename: 'styles.[contenthash].css',
       }),
     ],
-
     mode: isProd ? 'production' : 'development',
   };
 };
