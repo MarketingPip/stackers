@@ -166,18 +166,18 @@
             </div>
 
             <div class="max-w-4xl mx-auto glass-morphism rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-                <div class="flex border-b border-white/10 bg-black/40">
-                    <button onclick="switchTab('iframe')" id="tab-iframe" class="px-8 py-4 text-sm font-bold uppercase tracking-widest text-accent border-b-2 border-accent transition-all">
+                <div class="flex border-b border-white/10 bg-black/40" id="tab-container">
+                    <button data-tab-target="iframe" class="tab-btn px-8 py-4 text-sm font-bold uppercase tracking-widest text-accent border-b-2 border-accent transition-all">
                         iFrame Embed
                     </button>
-                    <button onclick="switchTab('esm')" id="tab-esm" class="px-8 py-4 text-sm font-bold uppercase tracking-widest text-slate-500 hover:text-white transition-all">
+                    <button data-tab-target="esm" class="tab-btn px-8 py-4 text-sm font-bold uppercase tracking-widest text-slate-500 hover:text-white transition-all">
                         ESM Module
                     </button>
                 </div>
 
-                <div id="content-iframe" class="p-8">
+                <div id="content-iframe" class="tab-content p-8">
                     <p class="text-slate-400 mb-6 text-sm italic">The quickest way to add the game to any CMS or static site.</p>
-                    <div class="bg-black/60 rounded-xl p-6 font-mono text-sm text-primary overflow-x-auto relative group">
+                    <div class="bg-black/60 rounded-xl p-6 font-mono text-sm text-primary overflow-x-auto relative group border border-white/5">
                         <code id="code-iframe">
 &lt;iframe <br>
 &nbsp;&nbsp;src="https://play.openstacker.io/embed" <br>
@@ -187,15 +187,15 @@
 &nbsp;&nbsp;allowfullscreen&gt;<br>
 &lt;/iframe&gt;
                         </code>
-                        <button class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors" onclick="copyCode('code-iframe')">
+                        <button class="copy-btn absolute top-4 right-4 text-slate-500 hover:text-white transition-colors" data-copy-target="code-iframe">
                             <i data-lucide="copy" class="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
 
-                <div id="content-esm" class="hidden p-8">
+                <div id="content-esm" class="tab-content hidden p-8">
                     <p class="text-slate-400 mb-6 text-sm italic">Perfect for React, Vue, or vanilla JS applications.</p>
-                    <div class="bg-black/60 rounded-xl p-6 font-mono text-sm text-secondary overflow-x-auto relative group">
+                    <div class="bg-black/60 rounded-xl p-6 font-mono text-sm text-secondary overflow-x-auto relative group border border-white/5">
                         <code id="code-esm">
 import { OpenStacker } from 'https://cdn.openstacker.io/v1/game.js';<br><br>
 const game = new OpenStacker({<br>
@@ -205,7 +205,7 @@ const game = new OpenStacker({<br>
 });<br><br>
 game.start();
                         </code>
-                        <button class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors" onclick="copyCode('code-esm')">
+                        <button class="copy-btn absolute top-4 right-4 text-slate-500 hover:text-white transition-colors" data-copy-target="code-esm">
                             <i data-lucide="copy" class="w-4 h-4"></i>
                         </button>
                     </div>
