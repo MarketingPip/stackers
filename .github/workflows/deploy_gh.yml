@@ -6,12 +6,12 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
@@ -27,47 +27,45 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      # 1. Build the Game
+      # 1. Build the Game (Root)
       - name: Build Game 🎮
         run: |
           npm install
           npx webpack --config ./src/webpack.config.js
 
-      # 2. Build Website Assets (Webpack)
-      - name: Build Webpack Assets 🏗️
+      # 2. Build Website Assets
+      - name: Build Website 🏗️
         working-directory: website
         run: |
           npm install
           npm run build:ghpages
 
-      # 3. Setup Ruby for Jekyll
-      - name: Setup Ruby 💎
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-          working-directory: website
-
-      # 4. Process everything through Jekyll
-      - name: Jekyll Build 💎
+      # 3. PREPARE: Move files into the Jekyll source folder
+      # This ensures Jekyll "sees" them when the container starts
+      - name: Prepare Jekyll Source 📋
         run: |
-          # Copy the game file into the website folder so Jekyll processes it
           cp dist/game.html website/play-stackers.html
-          
-          cd website
-          # Build the site. 
-          # Jekyll will parse the variables in your Webpack HTML and play-stackers.html
-          bundle exec jekyll build
-        env:
-          JEKYLL_ENV: production
 
-      # 5. Clean Deploy
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+      # 4. Build with Jekyll (Official Action)
+      - name: Build with Jekyll 💎
+        uses: actions/jekyll-build-pages@v1
         with:
-          # Point ONLY to the result of the Jekyll build
-          folder: website/_site
-          branch: gh-pages
-          clean: true
+          # Tell Jekyll that the site lives in the 'website' folder
+          source: ./website/
+          destination: ./_site
+
+      # 5. Upload & Deploy
+      - name: Upload artifact 🚀
+        uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages 🚀
+        id: deployment
+        uses: actions/deploy-pages@v4
