@@ -1,10 +1,7 @@
-
-// ============================================================
-// webpack.config.js
-// ============================================================
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const tailwindcss = require('@tailwindcss/postcss'); // Import the v4 plugin
 
 module.exports = (env, argv) => {
   const isProd = argv.mode === 'production';
@@ -24,7 +21,17 @@ module.exports = (env, argv) => {
           use: [
             isProd ? MiniCssExtractPlugin.loader : 'style-loader',
             'css-loader',
-            'postcss-loader',  // @tailwindcss/postcss handles everything
+            {
+              loader: 'postcss-loader',
+              options: {
+                postcssOptions: {
+                  plugins: [
+                    tailwindcss(), // Required for Tailwind v4
+                    require('autoprefixer')(),
+                  ],
+                },
+              },
+            },
           ],
         },
         {
@@ -32,10 +39,6 @@ module.exports = (env, argv) => {
           loader: 'html-loader',
         },
       ],
-    },
-    resolve: {
-      modules: [path.resolve(__dirname, 'node_modules'), 'node_modules'],
-      extensions: ['.js', '.json', '.wasm'],
     },
     plugins: [
       new HtmlWebpackPlugin({
