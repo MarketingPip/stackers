@@ -1,8 +1,36 @@
-import * as lucide from 'lucide';
-
 import "../css/styles.css";
+ 
+import '../css/styles.css';
 
-lucide.createIcons();
+import { 
+  createIcons, 
+  Layers, 
+  Github, 
+  Menu, 
+  Download, 
+  Cpu, 
+  Monitor, 
+  Code2, 
+  CheckCircle, 
+  Terminal, 
+  Apple 
+} from 'lucide';
+
+// Initialize the icons
+createIcons({
+  icons: {
+    Layers,
+    Github,
+    Menu,
+    Download,
+    Cpu,
+    Monitor,
+    Code2,
+    CheckCircle,
+    Terminal,
+    Apple
+  }
+});
 
 // Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
