@@ -49,10 +49,6 @@ jobs:
           # Move only what you want
           cp dist/game.html final_site/play-stackers.html
           cp -r website/dist/* final_site/
-          
-          # CRITICAL: Jekyll ignores variables in .html files unless they have Front Matter.
-          # This command prepends "---" to the top of every .html file in the folder.
-          sed -i '1i ---\n---' final_site/*.html
 
       # 4. Build with Jekyll (Official Action)
       - name: Build with Jekyll 💎
