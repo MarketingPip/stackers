@@ -6,7 +6,9 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
+  pages: write      # Required for official deployment
+  id-token: write   # Required for official deployment
 
 jobs:
   build-and-deploy:
@@ -17,10 +19,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Ensure Lockfile exists 🛠️
-        # Note the 'working-directory' and the path check
         run: |
           if [ ! -f website/package-lock.json ]; then
-            echo "No lockfile found in website folder. Generating..."
             npm i --package-lock-only
           fi
         working-directory: website
@@ -30,25 +30,23 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          # This tells the cache to look for the lockfile inside 'website'
           cache-dependency-path: website/package-lock.json
 
       - name: Install dependencies 🔧
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+        run: npm install
         working-directory: website
 
       - name: Build project 🏗️
         run: npm run build:ghpages
         working-directory: website
 
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          # Assuming Webpack outputs to 'website/dist'
-          folder: website/dist 
-          branch: gh-pages
+  deploy:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages 🚀
+        id: deployment
+        uses: actions/deploy-pages@v4
