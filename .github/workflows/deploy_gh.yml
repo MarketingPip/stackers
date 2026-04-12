@@ -54,6 +54,7 @@ jobs:
           bundle exec jekyll build
         env:
           JEKYLL_ENV: production
+          PAGES_REPO_NWO: ${{ github.repository }} # This provides "username/repo"
 
       - name: Create .nojekyll file 📄
         run: touch website/_site/.nojekyll
@@ -64,3 +65,5 @@ jobs:
           folder: website/_site
           branch: gh-pages
           clean: true
+        env:
+         PAGES_REPO_NWO: ${{ github.repository }} # This provides "username/repo"
