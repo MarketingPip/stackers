@@ -6,7 +6,7 @@ module.exports = (env, argv) => {
   const isProd = argv.mode === 'production';
  
   return {
-    entry: path.resolve(__dirname, 'website/js/main.js'),
+    entry: path.resolve(__dirname, 'js/main.js'),
 
     output: {
       path: path.resolve(__dirname, 'dist'),
@@ -34,7 +34,7 @@ module.exports = (env, argv) => {
 
     plugins: [
       new HtmlWebpackPlugin({
-        template: path.resolve(__dirname, 'website/pages/index.html'),
+        template: path.resolve(__dirname, 'pages/index.html'),
       }),
       new MiniCssExtractPlugin({
         filename: 'styles.[contenthash].css',
