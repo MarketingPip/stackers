@@ -43,6 +43,10 @@ jobs:
           bundler-cache: true
           working-directory: website
 
+      - name: Build Website With Webpack
+        run: npm run build:ghpages
+        working-directory: website
+
       - name: Build Website with Jekyll 🏗️
         run: |
           # Move game output into Jekyll source folder
