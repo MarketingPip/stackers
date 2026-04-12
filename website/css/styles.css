@@ -11,7 +11,10 @@
   --font-display: "Space Grotesk", sans-serif;
 }
 
-@source "../**/*.{html,js}";
+
+@source "../**\/*.{html,js}";
+
+
 
 /* Custom Utility Classes */
 @layer utilities {
