@@ -29,13 +29,20 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      # 1. Build the Webpack Game
-      - name: Install dependencies and Build Game 🎮
+      # 1. Build the Game
+      - name: Build Game 🎮
         run: |
           npm install
           npx webpack --config ./src/webpack.config.js
 
-      # 2. Setup Ruby for Jekyll
+      # 2. Build Website Assets (Webpack)
+      - name: Build Webpack Assets 🏗️
+        working-directory: website
+        run: |
+          npm install
+          npm run build:ghpages
+
+      # 3. Setup Ruby for Jekyll
       - name: Setup Ruby 💎
         uses: ruby/setup-ruby@v1
         with:
@@ -43,32 +50,24 @@ jobs:
           bundler-cache: true
           working-directory: website
 
-      # 3. Build the Jekyll Site
-      - name: Build Website 🏗️
+      # 4. Process everything through Jekyll
+      - name: Jekyll Build 💎
         run: |
-          # Move game output into Jekyll source folder BEFORE Jekyll builds
-          # Using -p ensures it doesn't fail if directory exists
+          # Copy the game file into the website folder so Jekyll processes it
           cp dist/game.html website/play-stackers.html
           
-          # Install JS deps for the website folder if needed
           cd website
-          npm install
-          npm run build:ghpages
-          
-          # Run Jekyll build
+          # Build the site. 
+          # Jekyll will parse the variables in your Webpack HTML and play-stackers.html
           bundle exec jekyll build
         env:
           JEKYLL_ENV: production
-          PAGES_REPO_NWO: ${{ github.repository }} # This provides "username/repo"
 
-      # 4. Final Prep and Deploy
-      - name: Create .nojekyll file 📄
-        run: touch website/_site/.nojekyll
-
+      # 5. Clean Deploy
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          # FIXED: Point to the actual Jekyll output directory
+          # Point ONLY to the result of the Jekyll build
           folder: website/_site
           branch: gh-pages
           clean: true
