@@ -16,35 +16,39 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      # This step creates a lockfile if it's missing so setup-node doesn't crash
       - name: Ensure Lockfile exists 🛠️
+        # Note the 'working-directory' and the path check
         run: |
-          if [ ! -f package-lock.json ]; then
-            echo "No lockfile found. Generating a temporary one for caching..."
+          if [ ! -f website/package-lock.json ]; then
+            echo "No lockfile found in website folder. Generating..."
             npm i --package-lock-only
           fi
+        working-directory: website
 
       - name: Setup Node.js ⚙️
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Cache usually requires a lockfile to work effectively
           cache: 'npm'
+          # This tells the cache to look for the lockfile inside 'website'
+          cache-dependency-path: website/package-lock.json
 
       - name: Install dependencies 🔧
         run: |
           if [ -f package-lock.json ]; then
             npm ci
           else
-            npm install lucide 
             npm install
           fi
+        working-directory: website
 
       - name: Build project 🏗️
         run: npm run build:ghpages
+        working-directory: website
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist
+          # Assuming Webpack outputs to 'website/dist'
+          folder: website/dist 
           branch: gh-pages
