@@ -26,6 +26,22 @@
         }
     </style>
 </head>
+
+    {% if site.github.latest_release %}
+  <h3>Download Latest: {{ site.github.latest_release.name }}</h3>
+  <ul>
+    {% for asset in site.github.latest_release.assets %}
+      <li>
+        <a href="{{ asset.browser_download_url }}">
+          Download {{ asset.name }} 
+          ({{ asset.size | divided_by: 1048576 | round: 2 }} MB)
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No releases found.</p>
+{% endif %}
 <body class="bg-dark text-text-primary antialiased arcade-grid">
 
     <header class="fixed w-full z-50 glass-morphism border-b border-white/10">
