@@ -24,3 +24,7 @@
     linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
   background-size: 40px 40px;
 }
+
+
+/* Force Tailwind to scan the pages directory */
+@source "../**/*..{html,js}";
