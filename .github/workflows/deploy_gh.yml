@@ -45,4 +45,4 @@ jobs:
           branch: gh-pages      # The branch it will push to
           clean: true           # Automatically remove old files from gh-pages
           env:
-            NODE_ENV: production # This ensures Tailwind v4 optimizes the output
+          NODE_ENV: production # This ensures Tailwind v4 optimizes the output
