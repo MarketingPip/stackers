@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'package.json'      # Root dependencies / version bumps
+      - 'website/**'        # Any file inside the website folder
+      - '.github/workflows/deploy_gh.yml' # The workflow itself
 
 permissions:
   contents: read
