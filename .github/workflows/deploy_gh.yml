@@ -17,6 +17,13 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
+      - name: Ensure root lockfile exists 🛠️
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm i --package-lock-only
+          fi
+
+
       # 1. Setup Node for the Webpack Game Build
       - name: Setup Node.js ⚙️
         uses: actions/setup-node@v4
@@ -24,12 +31,6 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-
-      - name: Ensure root lockfile exists 🛠️
-        run: |
-          if [ ! -f package-lock.json ]; then
-            npm i --package-lock-only
-          fi
 
       - name: Install dependencies and Build Game 🎮
         run: |
