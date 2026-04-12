@@ -24,6 +24,13 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+
+      - name: Ensure root lockfile exists 🛠️
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm i --package-lock-only
+          fi
+
       - name: Install dependencies and Build Game 🎮
         run: |
           npm install
