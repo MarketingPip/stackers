@@ -70,7 +70,7 @@ jobs:
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: website/_site
+          folder: website/_site/dist
           branch: gh-pages
           clean: true
         env:
