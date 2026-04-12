@@ -6,9 +6,7 @@ on:
       - main
 
 permissions:
-  contents: read
-  pages: write      # Required for official deployment
-  id-token: write   # Required for official deployment
+  contents: write  # Crucial: allows pushing to the gh-pages branch
 
 jobs:
   build-and-deploy:
@@ -20,7 +18,7 @@ jobs:
 
       - name: Ensure Lockfile exists 🛠️
         run: |
-          if [ ! -f website/package-lock.json ]; then
+          if [ ! -f package-lock.json ]; then
             npm i --package-lock-only
           fi
         working-directory: website
@@ -40,16 +38,9 @@ jobs:
         run: npm run build:ghpages
         working-directory: website
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build-and-deploy
-    steps:
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          # Assuming Webpack outputs to 'website/dist'
-          folder: website/dist 
-          branch: gh-pages
+          folder: website/dist  # Where Webpack put the files
+          branch: gh-pages      # The branch it will push to
+          clean: true           # Automatically remove old files from gh-pages
