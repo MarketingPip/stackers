@@ -43,6 +43,13 @@ jobs:
           bundler-cache: true
           working-directory: website
 
+      - name: Install website dependencies 🔧
+        run: npm install
+        working-directory: website
+
+      - name: Build website with Webpack 🏗️
+        run: npm run build:ghpages
+        working-directory: website
 
       - name: Build Website with Jekyll 🏗️
         run: |
@@ -51,7 +58,6 @@ jobs:
           cp dist/game.html website/play-stackers.html
           
           cd website
-          npm run build:ghpages
           # Ensure Jekyll knows the production URL (use your repo name)
           bundle exec jekyll build
         env:
