@@ -59,6 +59,7 @@ jobs:
           bundle exec jekyll build
         env:
           JEKYLL_ENV: production
+          PAGES_REPO_NWO: ${{ github.repository }} # This provides "username/repo"
 
       # 4. Final Prep and Deploy
       - name: Create .nojekyll file 📄
