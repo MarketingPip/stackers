@@ -32,6 +32,39 @@ createIcons({
   }
 });
 
+
+// Tab switching logic
+        function switchTab(type) {
+            const iframeTab = document.getElementById('tab-iframe');
+            const esmTab = document.getElementById('tab-esm');
+            const iframeContent = document.getElementById('content-iframe');
+            const esmContent = document.getElementById('content-esm');
+
+            if (type === 'iframe') {
+                iframeTab.classList.add('text-accent', 'border-accent');
+                iframeTab.classList.remove('text-slate-500');
+                esmTab.classList.remove('text-accent', 'border-accent');
+                esmTab.classList.add('text-slate-500');
+                iframeContent.classList.remove('hidden');
+                esmContent.classList.add('hidden');
+            } else {
+                esmTab.classList.add('text-accent', 'border-accent');
+                esmTab.classList.remove('text-slate-500');
+                iframeTab.classList.remove('text-accent', 'border-accent');
+                iframeTab.classList.add('text-slate-500');
+                esmContent.classList.remove('hidden');
+                iframeContent.classList.add('hidden');
+            }
+        }
+
+        // Copy code helper
+        function copyCode(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Code copied to clipboard!');
+            });
+        }
+
 // Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', function (e) {
