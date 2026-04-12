@@ -1,13 +1,22 @@
 name: Deploy Website to GitHub Pages
 
 on:
+  # Trigger 1: When the App finishes building
+  workflow_run:
+    workflows: ["Build and Publish Electron App"]
+    types:
+      - completed
+    branches:
+      - main
+      
+  # Trigger 2: When you only touch the website files
   push:
     branches:
       - main
     paths:
-      - 'package.json'      # Root dependencies / version bumps
-      - 'website/**'        # Any file inside the website folder
-      - '.github/workflows/deploy_gh.yml' # The workflow itself
+      - 'package.json'
+      - 'website/**'
+      - '.github/workflows/deploy_gh.yml'
 
 permissions:
   contents: read
