@@ -1870,22 +1870,25 @@ const side = document.getElementById('side');
   }
 };
 
+
+
+if (isElectron && SETTINGS.fullscreen && !document.fullscreenElement) {
+    await document.documentElement.requestFullscreen();
+}   
+  
 const toggleFullscreen = async () => {
   try {
     // 1. If we WANT fullscreen and aren't there yet -> Request it
-    if (SETTINGS.fullscreen && !document.fullscreenElement) {
+    if (!document.fullscreenElement) {
       await document.documentElement.requestFullscreen();
     } 
     // 2. If we DON'T want fullscreen but are currently in it -> Exit it
-    else if (!SETTINGS.fullscreen && document.fullscreenElement) {
+    if (document.fullscreenElement) {
       await document.exitFullscreen();
     }
   } catch (err) {
     // This catches the "Permissions check failed" if called without a click
     console.warn(`Fullscreen transition failed: ${err.message}`);
-    
-    // Sync the setting back to the actual state of the DOM
-    SETTINGS.fullscreen = !!document.fullscreenElement;
   }
 };
 
