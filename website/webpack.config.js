@@ -21,6 +21,7 @@ module.exports = (env, argv) => {
           use: [
             isProd ? MiniCssExtractPlugin.loader : 'style-loader',
             'css-loader',
+            '@tailwindcss/webpack'
             // postcss-loader removed — @tailwindcss/webpack handles this
           ],
         },
@@ -35,7 +36,6 @@ module.exports = (env, argv) => {
       extensions: ['.js', '.json', '.wasm'],
     },
     plugins: [
-      new TailwindPlugin(),
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, 'pages/index.html'),
       }),
