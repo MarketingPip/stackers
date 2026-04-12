@@ -17,25 +17,19 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      - name: Ensure root lockfile exists 🛠️
-        run: |
-          if [ ! -f package-lock.json ]; then
-            npm i --package-lock-only
-          fi
-
-      # 1. Build the Webpack Game
       - name: Setup Node.js ⚙️
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
+      # 1. Build the Webpack Game
       - name: Install dependencies and Build Game 🎮
         run: |
           npm install
           npx webpack --config ./src/webpack.config.js
 
-      # 2. Build the Jekyll Site
+      # 2. Setup Ruby for Jekyll
       - name: Setup Ruby 💎
         uses: ruby/setup-ruby@v1
         with:
@@ -43,35 +37,31 @@ jobs:
           bundler-cache: true
           working-directory: website
 
-      - name: Install website dependencies 🔧
-        run: npm install
-        working-directory: website
-
-      - name: Build website with Webpack 🏗️
-        run: npm run build:ghpages
-        working-directory: website
-
-      - name: Build Website with Jekyll 🏗️
+      # 3. Build the Jekyll Site
+      - name: Build Website 🏗️
         run: |
-          # Move game output into Jekyll source folder
-          mkdir -p website/
+          # Move game output into Jekyll source folder BEFORE Jekyll builds
+          # Using -p ensures it doesn't fail if directory exists
           cp dist/game.html website/play-stackers.html
           
+          # Install JS deps for the website folder if needed
           cd website
-          # Ensure Jekyll knows the production URL (use your repo name)
+          npm install
+          npm run build:ghpages
+          
+          # Run Jekyll build
           bundle exec jekyll build
         env:
           JEKYLL_ENV: production
-          PAGES_REPO_NWO: ${{ github.repository }} # This provides "username/repo"
 
+      # 4. Final Prep and Deploy
       - name: Create .nojekyll file 📄
         run: touch website/_site/.nojekyll
-      # 3. Deploy to the gh-pages branch
+
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: website/_site/dist
+          # FIXED: Point to the actual Jekyll output directory
+          folder: website/_site
           branch: gh-pages
           clean: true
-        env:
-         PAGES_REPO_NWO: ${{ github.repository }} # This provides "username/repo"
