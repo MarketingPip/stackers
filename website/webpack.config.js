@@ -1,7 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const TailwindPlugin = require('@tailwindcss/webpack');
 
 module.exports = (env, argv) => {
   const isProd = argv.mode === 'production';
@@ -20,15 +19,19 @@ module.exports = (env, argv) => {
           test: /\.css$/i,
           use: [
             isProd ? MiniCssExtractPlugin.loader : 'style-loader',
-             {
+            {
               loader: 'css-loader',
               options: {
-                import: false,   // Tailwind handles @import
-                url: false,      // don't rewrite urls
+                import: false,
+                url: false,
               },
             },
-            '@tailwindcss/webpack'
-            // postcss-loader removed — @tailwindcss/webpack handles this
+            {
+              loader: '@tailwindcss/webpack',
+              options: {
+                optimize: isProd,
+              },
+            },
           ],
         },
         {
