@@ -59,10 +59,22 @@ jobs:
         env:
           JEKYLL_ENV: production
 
-      # 4. Deploy to gh-pages branch
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build-and-deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
         with:
-          folder: website/_site  # Jekyll outputs to _site by default
-          branch: gh-pages
-          clean: true
+        # Specify the target branch for GitHub Pages deployment
+            branch: gh-pages
+        # Specify the directory containing the built static files
+            folder: website/_site  # Or the folder where your Jekyll build output is stored
+            clean: true
+
