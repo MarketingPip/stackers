@@ -30,6 +30,26 @@ jobs:
       - name: Install root dependencies 🔧
         run: npm install
 
+      # ✅ Manual install (fixed formatting + no duplicates)
+      - name: Install game dependencies
+        run: |
+          npm install --save-dev ^
+            webpack ^
+            webpack-cli ^
+            webpack-dev-server ^
+            html-webpack-plugin ^
+            mini-css-extract-plugin ^
+            css-loader ^
+            style-loader ^
+            postcss ^
+            postcss-loader ^
+            tailwindcss ^
+            autoprefixer ^
+            html-inline-script-webpack-plugin ^
+            html-inline-css-webpack-plugin ^
+            html-loader
+        shell: cmd
+
       - name: Build game 🎮
         run: npx webpack --config ./src/webpack.config.js
 
