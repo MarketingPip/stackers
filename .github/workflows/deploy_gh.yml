@@ -31,24 +31,24 @@ jobs:
         run: npm install
 
       # ✅ Manual install (fixed formatting + no duplicates)
-      - name: Install game dependencies
+      - name: Install dependencies (Linux)
         run: |
-          npm install --save-dev ^
-            webpack ^
-            webpack-cli ^
-            webpack-dev-server ^
-            html-webpack-plugin ^
-            mini-css-extract-plugin ^
-            css-loader ^
-            style-loader ^
-            postcss ^
-            postcss-loader ^
-            tailwindcss ^
-            autoprefixer ^
-            html-inline-script-webpack-plugin ^
-            html-inline-css-webpack-plugin ^
+          npm install --save-dev \
+            webpack \
+            webpack-cli \
+            webpack-dev-server \
+            html-webpack-plugin \
+            mini-css-extract-plugin \
+            css-loader \
+            style-loader \
+            postcss \
+            postcss-loader \
+            tailwindcss \
+            autoprefixer \
+            html-inline-css-webpack-plugin \
+            html-inline-script-webpack-plugin \
             html-loader
-        shell: cmd
+        if: matrix.os == 'ubuntu-latest'
 
       - name: Build game 🎮
         run: npx webpack --config ./src/webpack.config.js
