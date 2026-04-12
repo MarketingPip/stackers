@@ -29,15 +29,20 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # ✅ Build step - Note we removed --publish=never so builder can prep files
+      # Ensure the builder binary is executable on Linux
+      - name: Fix permissions (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: chmod +x node_modules/app-builder-bin/linux/x64/app-builder
+
       - name: Build Electron App
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            npm run build:exe -- --win portable --ia32
+            npm run build:exe -- --win portable --ia32 --publish never
           else
-            npm run build:exe
+            # FIX: Skip Snap if you don't have snapcraft installed to avoid the error
+            npm run build:exe -- --linux appimage deb --publish never
           fi
         shell: bash
 
