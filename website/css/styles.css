@@ -1,30 +1,38 @@
 @import "tailwindcss";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-/* Your custom styles */
-.glass-morphism {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+@theme {
+  --color-primary: #8B5CF6;
+  --color-secondary: #EC4899;
+  --color-accent: #22D3EE;
+  --color-dark: #0F172A;
+  --color-text-primary: #F8FAFC;
+
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
 }
 
-.hero-gradient {
-  background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 60%);
+@source "../**/*.{html,js}";
+
+/* Custom Utility Classes */
+@layer utilities {
+  .glass-morphism {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .hero-gradient {
+    background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 60%);
+  }
+
+  .neon-border {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+  }
+
+  .arcade-grid {
+    background-image:
+      linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
 }
-
-.neon-border {
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
-}
-
-.arcade-grid {
-  background-image:
-    linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-
-/* Force Tailwind to scan the pages directory */
-@source "../**/*..{html,js}";
