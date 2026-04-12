@@ -57,7 +57,10 @@ jobs:
           # We point Jekyll ONLY to the clean folder
           source: ./final_site/
           destination: ./_site
-
+        env:
+          JEKYLL_ENV: production
+          PAGES_REPO_NWO: ${{ github.repository }} # This provides "username/repo"
+          
       # 5. Upload artifact
       - name: Upload artifact 🚀
         uses: actions/upload-pages-artifact@v3
