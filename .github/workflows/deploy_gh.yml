@@ -16,6 +16,14 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
+      # This step creates a lockfile if it's missing so setup-node doesn't crash
+      - name: Ensure Lockfile exists 🛠️
+        run: |
+          if [ ! -f package-lock.json ]; then
+            echo "No lockfile found. Generating a temporary one for caching..."
+            npm i --package-lock-only
+          fi
+
       - name: Setup Node.js ⚙️
         uses: actions/setup-node@v4
         with:
