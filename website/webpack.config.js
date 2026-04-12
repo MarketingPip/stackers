@@ -32,6 +32,11 @@ module.exports = (env, argv) => {
       ],
     },
 
+    resolve: {
+  modules: [path.resolve(__dirname, 'node_modules'), 'node_modules'],
+  extensions: ['.js', '.json', '.wasm'],
+},
+
     plugins: [
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, 'pages/index.html'),
