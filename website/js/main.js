@@ -34,36 +34,47 @@ createIcons({
 
 
 // Tab switching logic
-        function switchTab(type) {
-            const iframeTab = document.getElementById('tab-iframe');
-            const esmTab = document.getElementById('tab-esm');
-            const iframeContent = document.getElementById('content-iframe');
-            const esmContent = document.getElementById('content-esm');
+document.addEventListener('click', (e) => {
+    // 1. Tab Switching Logic
+    const tabBtn = e.target.closest('[data-tab-target]');
+    if (tabBtn) {
+        const target = tabBtn.dataset.tabTarget;
+        const container = tabBtn.closest('.glass-morphism');
 
-            if (type === 'iframe') {
-                iframeTab.classList.add('text-accent', 'border-accent');
-                iframeTab.classList.remove('text-slate-500');
-                esmTab.classList.remove('text-accent', 'border-accent');
-                esmTab.classList.add('text-slate-500');
-                iframeContent.classList.remove('hidden');
-                esmContent.classList.add('hidden');
-            } else {
-                esmTab.classList.add('text-accent', 'border-accent');
-                esmTab.classList.remove('text-slate-500');
-                iframeTab.classList.remove('text-accent', 'border-accent');
-                iframeTab.classList.add('text-slate-500');
-                esmContent.classList.remove('hidden');
-                iframeContent.classList.add('hidden');
-            }
-        }
+        // Update Buttons: Reset all, then activate current
+        container.querySelectorAll('[data-tab-target]').forEach(btn => {
+            btn.classList.remove('text-accent', 'border-accent');
+            btn.classList.add('text-slate-500');
+        });
+        tabBtn.classList.add('text-accent', 'border-accent');
+        tabBtn.classList.remove('text-slate-500');
 
-        // Copy code helper
-        function copyCode(elementId) {
-            const text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Code copied to clipboard!');
-            });
-        }
+        // Update Content: Hide all, then show target
+        container.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.toggle('hidden', content.id !== `content-${target}`);
+        });
+        return; // Exit early
+    }
+
+    // 2. Copy to Clipboard Logic
+    const copyBtn = e.target.closest('[data-copy-target]');
+    if (copyBtn) {
+        const targetId = copyBtn.dataset.copyTarget;
+        const text = document.getElementById(targetId).innerText;
+
+        navigator.clipboard.writeText(text).then(() => {
+            // Visual feedback using the accent color
+            const originalColor = copyBtn.style.color;
+            copyBtn.style.color = '#22D3EE';
+            
+            // Temporary tooltip-like effect or icon swap
+            setTimeout(() => {
+                copyBtn.style.color = originalColor;
+            }, 800);
+        });
+    }
+});
+
 
 // Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
