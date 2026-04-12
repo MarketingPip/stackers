@@ -1881,10 +1881,12 @@ const toggleFullscreen = async () => {
     // 1. If we WANT fullscreen and aren't there yet -> Request it
     if (!document.fullscreenElement) {
       await document.documentElement.requestFullscreen();
+      return;
     } 
     // 2. If we DON'T want fullscreen but are currently in it -> Exit it
     if (document.fullscreenElement) {
       await document.exitFullscreen();
+      return;
     }
   } catch (err) {
     // This catches the "Permissions check failed" if called without a click
