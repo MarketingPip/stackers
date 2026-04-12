@@ -2,9 +2,11 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlInlineScriptPlugin = require('html-inline-script-webpack-plugin');
 const HTMLInlineCSSWebpackPlugin = require('html-inline-css-webpack-plugin').default;
-
+const isProd = argv.mode === 'production';
 module.exports = {
   mode: 'development',
+  mode: isProd ? 'production' : 'development',
+  devtool: isProd ? false : 'source-map',
 
   entry: './src/game.js',
 
