@@ -51,7 +51,8 @@
                         "ia32"
                     ]
                 }
-            ]
+            ],
+            "requestedExecutionLevel": "asInvoker"
         },
         "linux": {
         "target": ["AppImage"],
