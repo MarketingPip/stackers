@@ -1,5 +1,6 @@
 import 'lucide'; 
 
+import "../css/styles.css";
 
 if (window.lucide) {
   window.lucide.createIcons();
