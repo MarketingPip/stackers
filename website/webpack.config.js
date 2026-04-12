@@ -6,7 +6,7 @@ module.exports = (env, argv) => {
   const isProd = argv.mode === 'production';
  
   return {
-    entry: path.resolve(__dirname, '/js/main.js'),
+    entry: path.resolve(__dirname, 'website/js/main.js'),
 
     output: {
       path: path.resolve(__dirname, 'dist'),
@@ -15,14 +15,6 @@ module.exports = (env, argv) => {
     },
 
     devtool: isProd ? false : 'source-map',
-
-    devServer: {
-      static: './dist',
-      hot: true,
-      open: true,
-      port: 3000,
-    },
-
     module: {
       rules: [
         {
