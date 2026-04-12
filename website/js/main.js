@@ -1,6 +1,6 @@
 import "../css/styles.css";
  
-import '../css/styles.css';
+import '../pages/index.html';
 
 import { 
   createIcons, 
