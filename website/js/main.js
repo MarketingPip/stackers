@@ -1,10 +1,8 @@
-import 'lucide'; 
+import * as lucide from 'lucide';
 
 import "../css/styles.css";
 
-if (window.lucide) {
-  window.lucide.createIcons();
-}
+lucide.createIcons();
 
 // Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
