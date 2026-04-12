@@ -2,42 +2,50 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlInlineScriptPlugin = require('html-inline-script-webpack-plugin');
 const HTMLInlineCSSWebpackPlugin = require('html-inline-css-webpack-plugin').default;
-const isProd = argv.mode === 'production';
-module.exports = {
-  mode: 'development',
-  mode: isProd ? 'production' : 'development',
-  devtool: isProd ? false : 'source-map',
 
-  entry: './src/game.js',
+module.exports = (env, argv) => {
+  const isProd = argv.mode === 'production';
 
-  output: {
-    path: path.resolve(__dirname, '..', 'dist'), // go up one level
-    filename: 'bundle.js', // This will be inlined and won't exist as a separate file in dist
-    clean: true,
-  },
+  return {
+    mode: isProd ? 'production' : 'development',
+    
+    // Disable gross eval in dev, and keep production clean
+    devtool: isProd ? false : 'source-map',
 
-  module: {
-    rules: [
-      {
-        test: /\.html$/,
-        use: ['html-loader'],
-      },
-      {
-        // Added CSS support so it can be extracted and inlined
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
-      },
+    entry: './src/game.js',
+
+    output: {
+      path: path.resolve(__dirname, '..', 'dist'),
+      filename: 'bundle.js',
+      clean: true,
+    },
+
+    module: {
+      rules: [
+        {
+          test: /\.html$/,
+          use: ['html-loader'],
+        },
+        {
+          test: /\.css$/,
+          use: ['css-loader', 'postcss-loader'],
+        },
+      ],
+    },
+
+    plugins: [
+      new HtmlWebpackPlugin({
+        template: './src/game.html',
+        filename: 'game.html',
+        inject: 'body',
+        // Minify HTML only in production
+        minify: isProd ? {
+          collapseWhitespace: true,
+          removeComments: true,
+        } : false,
+      }),
+      new HTMLInlineCSSWebpackPlugin(),
+      new HtmlInlineScriptPlugin(),
     ],
-  },
-
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: './src/game.html',
-      filename: 'game.html',
-      inject: 'body', // Ensures script is placed in the body for the inliner to find it
-    }),
-    // Order matters: Inline CSS usually works best before or during the HTML script inlining
-    new HTMLInlineCSSWebpackPlugin(),
-    new HtmlInlineScriptPlugin(),
-  ],
+  };
 };
