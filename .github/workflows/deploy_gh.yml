@@ -39,24 +39,6 @@ jobs:
             npm install
           fi
 
-      - name: Install dependencies
-        run: |
-          npm install --save-dev ^
-            webpack ^
-            webpack-cli ^
-            webpack-dev-server ^
-            html-webpack-plugin ^
-            mini-css-extract-plugin ^
-            css-loader ^
-            style-loader ^
-            postcss ^
-            postcss-loader ^
-            tailwindcss ^
-            autoprefixer ^
-            html-inline-script-webpack-plugin ^
-            html-inline-css-webpack-plugin ^
-            html-loader
-
       - name: Build project 🏗️
         run: npm run build:ghpages
 
