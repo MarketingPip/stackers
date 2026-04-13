@@ -378,6 +378,102 @@ const WIN_SEQ = [
 
 [[0,0,0,0,0,0,0],[0,1,0,0,0,1,0],[0,1,0,1,0,1,0],[0,1,1,0,1,1,0],[0,1,0,0,0,1,0],[0,0,0,0,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0],[0,1,0,0,0,1,0],[0,1,1,0,0,1,0],[0,1,0,1,0,1,0],[0,1,0,0,1,1,0],[0,1,0,0,0,1,0]]
 ];
+  
+// ── Countdown animation frames (7-wide × 15-tall) ───────────────────  
+const COUNTDOWN_SEQ = [
+[
+  // Empty space (Rows 1-24)
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+
+  // The 1 (Rows 25-31)
+  [0,0,0,1,0,0,0],
+  [0,0,1,1,0,0,0],
+  [0,1,0,1,0,0,0],
+  [0,0,0,1,0,0,0],
+  [0,0,0,1,0,0,0],
+  [0,0,0,1,0,0,0],
+  [0,1,1,1,1,1,0],
+
+  // Empty space (Rows 32-55)
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]
+],
+  
+
+[
+  // Empty space (Rows 1-24)
+  ...Array(24).fill([0,0,0,0,0,0,0]),
+
+  // The 2 (Rows 25-31)
+  [0,1,1,1,1,1,0],
+  [1,0,0,0,0,0,1],
+  [0,0,0,0,0,0,1],
+  [0,1,1,1,1,1,0],
+  [1,0,0,0,0,0,0],
+  [1,0,0,0,0,0,0],
+  [1,1,1,1,1,1,1],
+
+  // Empty space (Rows 32-55)
+  ...Array(24).fill([0,0,0,0,0,0,0])
+],
+[
+  // Empty space (Rows 1-24)
+  ...Array(24).fill([0,0,0,0,0,0,0]),
+
+  // The 3 (Rows 25-31)
+  [0,1,1,1,1,1,0],
+  [0,0,0,0,0,0,1],
+  [0,0,0,0,0,0,1],
+  [0,1,1,1,1,1,0],
+  [0,0,0,0,0,0,1],
+  [0,0,0,0,0,0,1],
+  [0,1,1,1,1,1,0],
+
+  // Empty space (Rows 32-55)
+  ...Array(24).fill([0,0,0,0,0,0,0])
+],
+ [
+  // Empty space (Rows 1-24)
+  ...Array(24).fill([0,0,0,0,0,0,0]),
+
+  // The 4 (Rows 25-31)
+  [1,0,0,0,0,0,1],
+  [1,0,0,0,0,0,1],
+  [1,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,1],
+  [0,0,0,0,0,0,1],
+  [0,0,0,0,0,0,1],
+
+  // Empty space (Rows 32-55)
+  ...Array(24).fill([0,0,0,0,0,0,0])
+],
+[
+  // Empty space (Rows 1-24)
+  ...Array(24).fill([0,0,0,0,0,0,0]),
+
+  // The 5 (Rows 25-31)
+  [1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0],
+  [1,0,0,0,0,0,0],
+  [1,1,1,1,1,1,0],
+  [0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,1],
+  [0,1,1,1,1,1,0],
+
+  // Empty space (Rows 32-55)
+  ...Array(24).fill([0,0,0,0,0,0,0])
+]      
+]  
 
 const STACKER_BITMAP = [
     [0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],
@@ -1394,16 +1490,7 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
     ctx.fillStyle = secondary;
     ctx.font = "bold 28px 'Courier New'";
     ctx.fillText(this.countDownTimer, CW / 2, CH / 2 + 16);
-    this._drawBitmapOnGrid([
-  [1,1,1,1,1,1,1],
-  [1,0,0,0,0,0,0],
-  [1,0,0,0,0,0,0],
-  [1,1,1,1,1,1,0],
-  [0,0,0,0,0,0,1],
-  [0,0,0,0,0,0,1],
-  [1,1,1,1,1,1,0],
-  // ... pad to 15 rows if needed
-])
+    this._drawBitmapOnGrid(COUNTDOWN_SEQ[this.countDownTimer -1])
   }  
 
   // --- Credits Footer ---
@@ -1424,15 +1511,33 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
  
   
  _drawBitmapOnGrid(bitmap, color = "#4af", alpha = 0.85, glow = 14) {
-  for (let row = 0; row < bitmap.length && row < ROWS; row++) {
+  // 1. Calculate the starting row so the bitmap's center 
+  //    aligns with the board's center.
+  //    Example: Board 20 rows, Bitmap 55 rows. Start = (20 - 55) / 2 = -17.
+  const rowOffset = Math.floor((ROWS - bitmap.length) / 2);
+
+  for (let bRow = 0; bRow < bitmap.length; bRow++) {
+    const targetRow = bRow + rowOffset;
+
+    // 2. Only draw if the targetRow actually exists on the visible board
+    if (targetRow < 0 || targetRow >= ROWS) continue;
+
     for (let col = 0; col < COLS; col++) {
-      if (!bitmap[row][col]) continue;
+      if (!bitmap[bRow][col]) continue;
+
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.shadowColor = color;
       ctx.shadowBlur  = glow;
       ctx.fillStyle   = color;
-      ctx.fillRect(PAD + col * CELL + 1, BOARD_TOP + PAD + row * CELL + 1, CELL - 3, CELL - 3);
+      
+      // Use targetRow for the Y position calculation
+      ctx.fillRect(
+        PAD + col * CELL + 1, 
+        BOARD_TOP + PAD + targetRow * CELL + 1, 
+        CELL - 3, 
+        CELL - 3
+      );
       ctx.restore();
     }
   }
