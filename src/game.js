@@ -1480,7 +1480,7 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
   }
 
   // --- Countdown ---
-  if (this.pauseActions === true) {
+  if (this.state === STATE.STARTING && this.pauseActions === true) {
     ctx.textAlign = "center";
 
     ctx.fillStyle = primary;
@@ -1490,7 +1490,9 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
     ctx.fillStyle = secondary;
     ctx.font = "bold 28px 'Courier New'";
     ctx.fillText(this.countDownTimer, CW / 2, CH / 2 + 16);
+    if(this.countDownTimer != 0){
     this._drawBitmapOnGrid(COUNTDOWN_SEQ[this.countDownTimer -1])
+    }
   }  
 
   // --- Credits Footer ---
