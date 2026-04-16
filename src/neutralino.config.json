@@ -21,6 +21,7 @@
   },
   "cli": {
     "binaryName": "arcade-game",
+    "resourcesPath": "/dist/",
     "clientLibrary": "/dist/neutralino.js",
     "binaryVersion": "4.14.1"
   },
