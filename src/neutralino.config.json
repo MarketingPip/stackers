@@ -23,6 +23,9 @@
       "exitProcessOnClose": true
     }
   },
+  "cli": {
+    "binaryVersion": "4.14.1"
+  },
   "launcherConfig": {
     "singleInstance": true
   }
