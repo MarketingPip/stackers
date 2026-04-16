@@ -2,7 +2,7 @@
   "applicationId": "js.arcade.game",
   "version": "1.0.0",
   "defaultMode": "window",
-  "documentRoot": "../dist/",
+  "documentRoot": "/dist/",
   "url": "/game.html",
   "enableServer": true,
   "enableNativeCalls": true,
@@ -21,7 +21,7 @@
   },
   "cli": {
     "binaryName": "arcade-game",
-    "clientLibrary": "../dist/neutralino.js",
+    "clientLibrary": "/dist/neutralino.js",
     "binaryVersion": "4.14.1"
   },
   "launcherConfig": {
