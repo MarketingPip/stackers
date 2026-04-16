@@ -1,179 +1,66 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const defaultSettings = require('./settings.js'); 
-
-let mainWindow;
+// Neutralino Initialization
+Neutralino.init();
 
 // --- ARCADE SETUP ---
-// Check if launched with --fullscreen or --arcade flags
-const args = process.argv.slice(1);
+const args = NL_ARGS.slice(1);
 const isArcadeMode = args.includes('--fullscreen') || args.includes('--arcade');
 
-// Prevent multiple instances (crucial for arcade front-ends)
-const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-  app.quit();
-} else {
-  app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
-  });
+// Sync window with flags
+if (isArcadeMode) {
+    Neutralino.window.setFullScreen();
+    Neutralino.window.setAlwaysOnTop(true);
 }
 
-const USER_DATA_PATH = app.getPath('userData');
-
-// Default settings
-defaultSettings.fullscreen = isArcadeMode; // Sync default with launch flag
-
-// emit events from nodejs back to HTML
-function emit(method, ...args) {
-  if (mainWindow) {
-    mainWindow.webContents.send(method, ...args);
-  }
+/**
+ * Helper to resolve paths to the userData folder equivalent
+ * Neutralino uses NL_PATH (app folder) or NL_APP_DATA (system app data)
+ */
+async function getSafePath(fileName) {
+    return `${NL_APP_DATA}/arcade-game/${fileName}`;
 }
 
-app.disableHardwareAcceleration();
-
-// Catch any uncaught errors in the main process
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-  //app.quit();
-});
-
-process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled Rejection:', reason);
-  //app.quit();
-});
-
-// Function to create the window
-async function createWindow() {
-  try {
-    mainWindow = new BrowserWindow({
-      width: 900,
-      height: 1000,
-      backgroundColor: '#000000',
-      fullscreen: isArcadeMode,    // Start in fullscreen if requested
-      autoHideMenuBar: defaultSettings.electron_menu_bar,       // Native look for Arcade cabinets (default is false).
-      alwaysOnTop: isArcadeMode,   // Keeps focus in arcade environments
-      webPreferences: {
-        contextIsolation: true,
-        sandbox: true,
-        preload: path.join(__dirname, '..', 'preload.js'),
-      },
-    });
-
-    // --- ARCADE EXIT LOGIC ---
-    // Listen for the Escape key to close the app (standard arcade behavior)
-    mainWindow.webContents.on('before-input-event', (event, input) => {
-      if (input.key === 'Escape' && input.type === 'keyDown') {
-        app.quit();
-      }
-    });
-
-    const indexPath = path.join(__dirname, '..', 'dist', 'game.html'); 
-    await mainWindow.loadFile(indexPath);
-
-    mainWindow.on('closed', () => {
-      mainWindow = null;
-    });
-  } catch (err) {
-    console.error('Failed to create window or load file:', err);
-   // app.quit();
-  }
-}
-
-// Helper to resolve paths to the userData folder safely
-function getSafePath(fileName) {
-  return path.join(USER_DATA_PATH, fileName);
-}
-
-function mergeMissingKeys(defaultObj, existingObj) {
-  for (const key in defaultObj) {
-    if (
-      typeof defaultObj[key] === 'object' &&
-      defaultObj[key] !== null &&
-      !Array.isArray(defaultObj[key])
-    ) {
-      // Ensure nested object exists
-      if (!existingObj[key]) {
-        existingObj[key] = {};
-      }
-      mergeMissingKeys(defaultObj[key], existingObj[key]);
-    } else {
-      // Add missing key
-      if (!(key in existingObj)) {
-        existingObj[key] = defaultObj[key];
-      }
-    }
-  }
-  return existingObj;
-}
-
-function ensureSettingsFile() {
-  const settingsPath = getSafePath('settings.json');
-
-  if (!fs.existsSync(settingsPath)) {
-    fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
-    console.log('Settings file created at:', settingsPath);
-    return;
-  }
-
-  try {
-    const existingData = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-
-    const merged = mergeMissingKeys(defaultSettings, existingData);
-
-    fs.writeFileSync(settingsPath, JSON.stringify(merged, null, 2));
-    console.log('Settings file updated with missing keys (if any)');
-  } catch (err) {
-    console.error('Failed to read/merge settings, recreating file:', err);
-
-    // fallback: recreate file if corrupted
-    fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
-  }
-}
-
-// --- IPC HANDLERS ---
-
-ipcMain.handle('write-to-file', (event, fileName, content) => {
-  const fullPath = getSafePath(fileName);
-  fs.writeFileSync(fullPath, content);
-  return `File written to ${fullPath}`;
-});
-
-ipcMain.handle('read-from-file', (event, fileName) => {
-  try {
-    const fullPath = getSafePath(fileName);
-    const data = fs.readFileSync(fullPath, 'utf-8');
+/**
+ * Replaces ipcMain.handle('write-to-file')
+ */
+async function writeToFile(fileName, content) {
+    const fullPath = await getSafePath(fileName);
+    // Ensure directory exists
+    const dir = fullPath.substring(0, fullPath.lastIndexOf('/'));
+    try { await Neutralino.filesystem.createDirectory(dir); } catch(e) {}
     
-    if (fileName.endsWith(".json")) {
-      return JSON.parse(data);
+    await Neutralino.filesystem.writeFile(fullPath, content);
+    return `File written to ${fullPath}`;
+}
+
+/**
+ * Replaces ipcMain.handle('read-from-file')
+ */
+async function readFromFile(fileName) {
+    try {
+        const fullPath = await getSafePath(fileName);
+        const data = await Neutralino.filesystem.readFile(fullPath);
+        return fileName.endsWith(".json") ? JSON.parse(data) : data;
+    } catch (error) {
+        console.error('Error reading file:', error);
+        return { error: 'Error reading file' };
     }
-    return data;
-  } catch (error) {
-    console.error('Error reading file:', error);
-    return { error: 'Error reading file' };
-  }
+}
+
+/**
+ * ARCADE EXIT LOGIC
+ */
+Neutralino.events.on('windowClose', () => {
+    Neutralino.app.exit();
 });
 
-// Wrap app startup
-app.whenReady()
-  .then(() => {
-    ensureSettingsFile();
-    createWindow();
-  })
-  .catch((err) => {
-    console.error('Error during app startup:', err);
-    app.quit();
-  });
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+window.addEventListener('keydown', async (e) => {
+    if (e.key === 'Escape') {
+        await Neutralino.app.exit();
+    }
 });
 
-app.on('window-all-closed', () => {
-  app.quit();
+// Handle 'second-instance' equivalent
+Neutralino.events.on('appClientConnect', () => {
+    Neutralino.window.show();
+    Neutralino.window.focus();
 });
