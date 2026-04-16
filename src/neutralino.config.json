@@ -2,7 +2,7 @@
   "applicationId": "js.arcade.game",
   "version": "1.0.0",
   "defaultMode": "window",
-  "documentRoot": "../dist/",
+  "documentRoot": "/dist/",
   "url": "/game.html",
   "enableServer": true,
   "enableNativeCalls": true,
@@ -11,19 +11,19 @@
       "title": "Arcade Game",
       "width": 900,
       "height": 1000,
-      "minWidth": 400,
-      "minHeight": 400,
       "fullScreen": false,
       "alwaysOnTop": false,
       "enableInspector": false,
       "borderless": false,
       "maximize": false,
-      "hidden": false,
-      "resizable": true,
       "exitProcessOnClose": true
     }
   },
   "cli": {
+    "binaryName": "arcade-game",
+    "resourcesPath": "/resources/",
+    "extensionsPath": "/extensions/",
+    "clientLibrary": "/dist/neutralino.js",
     "binaryVersion": "4.14.1"
   },
   "launcherConfig": {
