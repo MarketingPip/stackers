@@ -26,7 +26,10 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install -g @neutralinojs/neu
+          neu update
 
       # ✅ Build step - Note we removed --publish=never so builder can prep files
       - name: Build Electron App
