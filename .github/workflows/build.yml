@@ -64,10 +64,10 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            dist/*.exe
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.zip
+            src/dist/*.exe
+            src/dist/*.AppImage
+            src/dist/*.deb
+            src/dist/*.zip
           draft: false
           prerelease: false
         env:
