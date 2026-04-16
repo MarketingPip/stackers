@@ -313,6 +313,124 @@ window.addEventListener("DOMContentLoaded", async () => {
     [[1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]],
     [[0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 1, 0], [0, 1, 0, 1, 0, 1, 0], [0, 1, 1, 0, 1, 1, 0], [0, 1, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0], [0, 1, 0, 0, 0, 1, 0], [0, 1, 1, 0, 0, 1, 0], [0, 1, 0, 1, 0, 1, 0], [0, 1, 0, 0, 1, 1, 0], [0, 1, 0, 0, 0, 1, 0]]
   ];
+  const COUNTDOWN_SEQ = [
+    [
+      // Empty space (Rows 1-24)
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      // The 1 (Rows 25-31)
+      [0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 1, 1, 0, 0, 0],
+      [0, 1, 0, 1, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0],
+      [0, 1, 1, 1, 1, 1, 0],
+      // Empty space (Rows 32-55)
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0]
+    ],
+    [
+      // Empty space (Rows 1-24)
+      ...Array(24).fill([0, 0, 0, 0, 0, 0, 0]),
+      // The 2 (Rows 25-31)
+      [0, 1, 1, 1, 1, 1, 0],
+      [1, 0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 0, 1],
+      [0, 1, 1, 1, 1, 1, 0],
+      [1, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0],
+      [1, 1, 1, 1, 1, 1, 1],
+      // Empty space (Rows 32-55)
+      ...Array(24).fill([0, 0, 0, 0, 0, 0, 0])
+    ],
+    [
+      // Empty space (Rows 1-24)
+      ...Array(24).fill([0, 0, 0, 0, 0, 0, 0]),
+      // The 3 (Rows 25-31)
+      [0, 1, 1, 1, 1, 1, 0],
+      [0, 0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 0, 1],
+      [0, 1, 1, 1, 1, 1, 0],
+      [0, 0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 0, 1],
+      [0, 1, 1, 1, 1, 1, 0],
+      // Empty space (Rows 32-55)
+      ...Array(24).fill([0, 0, 0, 0, 0, 0, 0])
+    ],
+    [
+      // Empty space (Rows 1-24)
+      ...Array(24).fill([0, 0, 0, 0, 0, 0, 0]),
+      // The 4 (Rows 25-31)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 1, 1, 1, 1, 1],
+      [0, 0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 0, 1],
+      // Empty space (Rows 32-55)
+      ...Array(24).fill([0, 0, 0, 0, 0, 0, 0])
+    ],
+    [
+      // Empty space (Rows 1-24)
+      ...Array(24).fill([0, 0, 0, 0, 0, 0, 0]),
+      // The 5 (Rows 25-31)
+      [1, 1, 1, 1, 1, 1, 1],
+      [1, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0],
+      [1, 1, 1, 1, 1, 1, 0],
+      [0, 0, 0, 0, 0, 0, 1],
+      [1, 0, 0, 0, 0, 0, 1],
+      [0, 1, 1, 1, 1, 1, 0],
+      // Empty space (Rows 32-55)
+      ...Array(24).fill([0, 0, 0, 0, 0, 0, 0])
+    ]
+  ];
   const STACKER_BITMAP = [
     [0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0],
@@ -1261,7 +1379,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         ctx.fillStyle = "#fa4";
         ctx.fillText("GET READY", CW / 2, CH - 30);
       }
-      if (this.pauseActions === true) {
+      if (this.state === STATE.STARTING && this.pauseActions === true) {
         ctx.textAlign = "center";
         ctx.fillStyle = primary;
         ctx.font = "bold 15px 'Courier New'";
@@ -1269,16 +1387,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         ctx.fillStyle = secondary;
         ctx.font = "bold 28px 'Courier New'";
         ctx.fillText(this.countDownTimer, CW / 2, CH / 2 + 16);
-        this._drawBitmapOnGrid([
-          [1, 1, 1, 1, 1, 1, 1],
-          [1, 0, 0, 0, 0, 0, 0],
-          [1, 0, 0, 0, 0, 0, 0],
-          [1, 1, 1, 1, 1, 1, 0],
-          [0, 0, 0, 0, 0, 0, 1],
-          [0, 0, 0, 0, 0, 0, 1],
-          [1, 1, 1, 1, 1, 1, 0]
-          // ... pad to 15 rows if needed
-        ]);
+        if (this.countDownTimer != 0) {
+          this._drawBitmapOnGrid(COUNTDOWN_SEQ[this.countDownTimer - 1]);
+        }
       }
       ctx.textAlign = "center";
       ctx.font = "11px 'Courier New'";
@@ -1292,16 +1403,25 @@ window.addEventListener("DOMContentLoaded", async () => {
       ctx.restore();
     }
     _drawBitmapOnGrid(bitmap, color = "#4af", alpha = 0.85, glow = 14) {
-      for (let row = 0; row < bitmap.length && row < ROWS; row++) {
+      const rowOffset = Math.floor((ROWS - bitmap.length) / 2);
+      for (let bRow = 0; bRow < bitmap.length; bRow++) {
+        const targetRow = bRow + rowOffset;
+        if (targetRow < 0 || targetRow >= ROWS)
+          continue;
         for (let col = 0; col < COLS; col++) {
-          if (!bitmap[row][col])
+          if (!bitmap[bRow][col])
             continue;
           ctx.save();
           ctx.globalAlpha = alpha;
           ctx.shadowColor = color;
           ctx.shadowBlur = glow;
           ctx.fillStyle = color;
-          ctx.fillRect(PAD + col * CELL + 1, BOARD_TOP + PAD + row * CELL + 1, CELL - 3, CELL - 3);
+          ctx.fillRect(
+            PAD + col * CELL + 1,
+            BOARD_TOP + PAD + targetRow * CELL + 1,
+            CELL - 3,
+            CELL - 3
+          );
           ctx.restore();
         }
       }
@@ -1622,9 +1742,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     try {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
+        return;
       }
       if (document.fullscreenElement) {
         await document.exitFullscreen();
+        return;
       }
     } catch (err) {
       console.warn(`Fullscreen transition failed: ${err.message}`);
