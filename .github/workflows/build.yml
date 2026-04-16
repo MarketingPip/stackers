@@ -27,10 +27,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd src
           npm install
           npm install -g @neutralinojs/neu
           neu update
-
       # ✅ Build step - Note we removed --publish=never so builder can prep files
       - name: Build Electron App
         env:
