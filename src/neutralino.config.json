@@ -22,7 +22,7 @@
   "cli": {
     "binaryName": "arcade-game",
     "resourcesPath": "../dist/",
-    "clientLibrary": "../dist/neutralino.js",
+    "clientLibrary": "electron.js",
     "binaryVersion": "4.14.1"
   },
   "launcherConfig": {
