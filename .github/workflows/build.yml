@@ -35,7 +35,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            npm run build:exe -- --win portable --ia32
+            npm run build:exe
           else
             npm run build:exe
           fi
