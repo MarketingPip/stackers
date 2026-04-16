@@ -26,16 +26,15 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: |
-          npm install
-          npm install -g @neutralinojs/neu
+        run: npm install
+
       # ✅ Build step - Note we removed --publish=never so builder can prep files
       - name: Build Electron App
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            npm run build:exe
+            npm run build:exe -- --win portable --ia32
           else
             npm run build:exe
           fi
@@ -64,10 +63,10 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            src/dist/*.exe
-            src/dist/*.AppImage
-            src/dist/*.deb
-            src/dist/*.zip
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.zip
           draft: false
           prerelease: false
         env:
