@@ -2,7 +2,7 @@
   "applicationId": "js.arcade.game",
   "version": "1.0.0",
   "defaultMode": "window",
-  "documentRoot": "/dist/",
+  "documentRoot": "../dist/",
   "url": "/game.html",
   "enableServer": true,
   "enableNativeCalls": true,
