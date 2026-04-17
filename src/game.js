@@ -1969,11 +1969,13 @@ const side = document.getElementById('side');
     //side.style.transform = "rotate(90deg)";
    // side.style.transformOrigin = "center center";
     //wrap.style["align-items"] = "flex-end";
+    fitToScreen(); 
   } else {
     devBtn.classList.remove("hidden")
     cv.style.transform = "none";
    // wrap.style["align-items"] = "flex-start";
     side.classList.remove("hidden")
+    fitToScreen(); 
   }
 };
 
