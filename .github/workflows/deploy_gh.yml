@@ -1,6 +1,7 @@
 name: Deploy Website to GitHub Pages
 
 on:
+  workflow_dispatch: # Allows manual triggering
   # Trigger 1: When the App finishes building
   workflow_run:
     workflows: ["Build and Publish Electron App"]
