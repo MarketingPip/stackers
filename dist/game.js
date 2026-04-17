@@ -1729,10 +1729,12 @@ window.addEventListener("DOMContentLoaded", async () => {
       cv.style.transformOrigin = "center center";
       side.classList.add("hidden");
       devBtn.classList.add("hidden");
+      fitToScreen();
     } else {
       devBtn.classList.remove("hidden");
       cv.style.transform = "none";
       side.classList.remove("hidden");
+      fitToScreen();
     }
   };
   if (isElectron && SETTINGS.fullscreen && !document.fullscreenElement) {
