@@ -141,7 +141,7 @@ SETTINGS.theme = SETTINGS?.theme ?? DEFAULT_SETTINGS.theme;
 
 const theme_query = new URLSearchParams(location.search).get("theme");
 
-if (Object.hasOwn(THEMES, theme)) {
+if (theme_query && Object.hasOwn(THEMES, theme_query)) {
   SETTINGS.theme = theme_query;
 };
   
