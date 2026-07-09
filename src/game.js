@@ -141,7 +141,7 @@ let THEME = SETTINGS?.theme || "cyberpunk"
 const theme_query = new URLSearchParams(location.search).get("theme");
 
 if (Object.hasOwn(THEMES, theme)) {
-  THEME = theme;
+  THEME = theme_query;
 };
   
   
