@@ -84,6 +84,8 @@ PRIZES: [
 
 window.addEventListener('DOMContentLoaded', async () => { 
 
+
+  
   /*
 
 TODO: 
@@ -130,6 +132,19 @@ const DEFAULT_SETTINGS = defaultSettings;
 const SETTINGS =  isElectron 
   ? await window.electron.call("read-from-file", 'settings.json') 
   : DEFAULT_SETTINGS;
+
+
+
+  
+let THEME = SETTINGS?.theme || "cyberpunk"  
+
+const theme_query = new URLSearchParams(location.search).get("theme");
+
+if (Object.hasOwn(THEMES, theme)) {
+  THEME = theme;
+};
+  
+  
 // ── Sound config ─────────────────────────────────────────────
 // Set SOUND_ENABLED = true and place MP3s in ./sfx/ to use real audio.
 // File names match the arcade asset list exactly.
