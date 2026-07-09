@@ -106,6 +106,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   ;
   const DEFAULT_SETTINGS = defaultSettings;
   const SETTINGS = isElectron ? await window.electron.call("read-from-file", "settings.json") : DEFAULT_SETTINGS;
+  let THEME = SETTINGS?.theme || "cyberpunk";
+  const theme_query = new URLSearchParams(location.search).get("theme");
+  if (Object.hasOwn(THEMES, theme)) {
+    THEME = theme;
+  }
+  ;
   const SOUND_ENABLED = SETTINGS.sound_enabled;
   const SFX_PATH = SETTINGS.sfx_path;
   const SFX_MAP = {
@@ -1249,13 +1255,13 @@ window.addEventListener("DOMContentLoaded", async () => {
     _drawAttract() {
       const g = this;
       const t = this.attractTm;
-      const theme = THEMES[this.currentTheme] ?? THEMES["classic_red"] ?? {};
-      const h = theme.header ?? {};
-      ctx.fillStyle = theme.bg ?? "#000814";
+      const theme2 = THEMES[this.currentTheme] ?? THEMES["classic_red"] ?? {};
+      const h = theme2.header ?? {};
+      ctx.fillStyle = theme2.bg ?? "#000814";
       ctx.fillRect(0, 0, CW, BOARD_TOP);
       const themePrimary = h.title ?? null;
       const themeSecondary = h.highScore ?? null;
-      const themeGrid = theme.grid ?? null;
+      const themeGrid = theme2.grid ?? null;
       const themeLabel = h.label ?? null;
       const primary = themePrimary ?? "#4af";
       const secondary = themeSecondary ?? "#ff4";
@@ -1433,8 +1439,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         this.log = true;
         console.log(THEMES[this.currentTheme], this.currentTheme);
       }
-      const theme = THEMES[this.currentTheme] || THEMES["cyberpunk"];
-      const h = theme.header ?? {};
+      const theme2 = THEMES[this.currentTheme] || THEMES["cyberpunk"];
+      const h = theme2.header ?? {};
       ctx.textAlign = "left";
       ctx.font = "bold 11px 'Courier New'";
       ctx.fillStyle = h.label ?? "#4af8";
@@ -1457,7 +1463,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       ctx.fillStyle = h.highScore ?? "#ff4";
       ctx.font = "bold 20px 'Courier New'";
       ctx.fillText(String(this.highScore).padStart(6, "0"), CW - 8, 38);
-      ctx.fillStyle = theme.grid ?? "#4af3";
+      ctx.fillStyle = theme2.grid ?? "#4af3";
       ctx.fillRect(0, 42, CW, 1);
       ctx.textAlign = "center";
       ctx.font = "10px 'Courier New'";
@@ -1472,7 +1478,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     // ── Board ─────────────────────────────────────────────────────
     _drawBoard() {
       const g = this;
-      const theme = THEMES[this.currentTheme] || THEMES["cyberpunk"];
+      const theme2 = THEMES[this.currentTheme] || THEMES["cyberpunk"];
       for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
           const px = PAD + x * CELL;
@@ -1480,10 +1486,10 @@ window.addEventListener("DOMContentLoaded", async () => {
           const on = g.board[y][x] === 1;
           let style;
           if (y === PRIZES[0].row)
-            style = theme.prizes?.[0];
+            style = theme2.prizes?.[0];
           else if (y === PRIZES[1].row)
-            style = theme.prizes?.[1];
-          style = style ?? theme.default ?? {};
+            style = theme2.prizes?.[1];
+          style = style ?? theme2.default ?? {};
           if (on) {
             const cx2 = px + CELL / 2, cy2 = py + CELL / 2;
             const grd = ctx.createRadialGradient(cx2, cy2, 2, cx2, cy2, CELL * 0.7);
@@ -1500,7 +1506,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
           ctx.shadowBlur = 0;
           if (!on) {
-            ctx.strokeStyle = theme.grid ?? "#4af1";
+            ctx.strokeStyle = theme2.grid ?? "#4af1";
             ctx.lineWidth = 0.5;
             ctx.strokeRect(px + 1, py + 1, CELL - 3, CELL - 3);
           }
@@ -1508,14 +1514,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
       ctx.font = "8px 'Courier New'";
       ctx.textAlign = "right";
-      ctx.fillStyle = theme.text ?? "#4af4";
+      ctx.fillStyle = theme2.text ?? "#4af4";
       for (let y = 0; y < ROWS; y++) {
         ctx.fillText(y, PAD - 1, BOARD_TOP + PAD + y * CELL + CELL / 2 + 3);
       }
       ctx.textAlign = "left";
     }
-    toggleTheme(theme) {
-      this.currentTheme = theme;
+    toggleTheme(theme2) {
+      this.currentTheme = theme2;
       this._drawBoard();
     }
     // ── Prize lines ───────────────────────────────────────────────
