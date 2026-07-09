@@ -6,6 +6,7 @@ const defaultSettings = {
   sfx_path: "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004",
   electron_menu_bar: true, // set to false for debugging.,
   credits_required:0, // if credits_required is less than 0 - freeplay enabled.. 
+  theme: "cyberpunk"
 };
 
 const THEMES = {
@@ -133,15 +134,15 @@ const SETTINGS =  isElectron
   ? await window.electron.call("read-from-file", 'settings.json') 
   : DEFAULT_SETTINGS;
 
-
+ 
 
   
-let THEME = SETTINGS?.theme || "cyberpunk"  
+SETTINGS.theme = SETTINGS?.theme ?? DEFAULT_SETTINGS.theme;
 
 const theme_query = new URLSearchParams(location.search).get("theme");
 
 if (Object.hasOwn(THEMES, theme)) {
-  THEME = theme_query;
+  SETTINGS.theme = theme_query;
 };
   
   
