@@ -156,6 +156,12 @@ if (theme_query && Object.hasOwn(THEMES, theme_query)) {
   SETTINGS.theme = theme_query;
 };
 
+const credits_query = new URLSearchParams(location.search).get("credits");
+
+if (credits_query !== null && !Number.isNaN(Number(credits_query))) {
+  SETTINGS.credits_required = Number(credits_query);
+}  
+
 // ── Button config ─────────────────────────────────────────────
 const ACTION_KEYS = {main_button:["NumpadEnter", "Enter"], continue_btn:["Space"], coin_insert:["KeyC"]}  
   
