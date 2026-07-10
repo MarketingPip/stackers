@@ -5,104 +5,130 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>STACKER</title>
 <style>
-  
   * { margin:0; padding:0; box-sizing:border-box; }
-body {
-  background:#000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  min-height:100vh;
-  overflow:hidden;
-}
-#wrap { position:relative; display:flex; align-items:flex-start; gap:16px; }
 
-/* Hide side panel on smaller screens */
-@media (max-width: 900px) {
-  #side {
-    display: none;
+  body {
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    overflow:hidden;
   }
-}
+
+  #game-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #rotate-container {
+    transform-origin: center center;
+    transition: transform 0.3s ease;
+  }
+
+  #rotate-container.rotated {
+    transform: rotate(90deg);
+  }
+
   canvas {
-    display:block;
-    image-rendering:pixelated;
-    cursor:pointer;
+    display: block;
+    image-rendering: pixelated;
+    cursor: pointer;
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
+    width: 100%;
+    height: 100%;
   }
-  
+
   /* Side panel */
   #side {
-    width:140px;
-    color:#4af;
-    font-size:11px;
-    line-height:1.8;
+    width: 140px;
+    color: #4af;
+    font-size: 11px;
+    line-height: 1.8;
   }
-  #side h3 { color:#ff4; margin-bottom:6px; font-size:12px; letter-spacing:2px; }
-  #side .ev {
-    background:#001133;
-    border:1px solid #4af3;
-    border-radius:4px;
-    padding:4px 6px;
-    margin:3px 0;
-    color:#8df;
-    font-size:10px;
-    transition:background 0.2s;
-  }
-  #side .ev.fired { background:#004488; color:#fff; }
-  #side .sep { border-top:1px solid #4af3; margin:8px 0; }
-  #side .label { color:#4af8; font-size:10px; }
-  .hidden {display: none}
-  
-  
-  #rotateBtn {
-  position: fixed;
-  bottom: 10px;
-  right: 120px;
-  background: #001133;
-  color: #4af;
-  border: 1px solid #4af;
-  padding: 6px 10px;
-  font-family: monospace;
-  cursor: pointer;
-  z-index: 10;
-}
 
-#fsBtn {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  background: #001133;
-  color: #4af;
-  border: 1px solid #4af;
-  padding: 6px 10px;
-  font-family: monospace;
-  cursor: pointer;
-  z-index: 10;
-}
-#devBtn {
- position: fixed;
-  bottom: 10px;
-  right: 200px;
-  background: #001133;
-  color: #4af;
-  border: 1px solid #4af;
-  padding: 6px 10px;
-  font-family: monospace;
-  cursor: pointer;
-  z-index: 10;
-}
-#c {
-  display: block;
-  transform-origin: center center; /* This is the default, but good to be sure */
-  transition: transform 0.2s ease-out; /* Optional: makes the rotation look cool */
-}  
+  #side h3 {
+    color: #ff4;
+    margin-bottom: 6px;
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+
+  #side .ev {
+    background: #001133;
+    border: 1px solid #4af3;
+    border-radius: 4px;
+    padding: 4px 6px;
+    margin: 3px 0;
+    color: #8df;
+    font-size: 10px;
+    transition: background 0.2s;
+  }
+
+  #side .ev.fired { background: #004488; color: #fff; }
+  #side .sep { border-top: 1px solid #4af3; margin: 8px 0; }
+  #side .label { color: #4af8; font-size: 10px; }
+
+  .hidden { display: none !important; }
+
+  /* Hide side panel on smaller screens */
+  @media (max-width: 900px) {
+    #side { display: none; }
+  }
+
+  #rotateBtn {
+    position: fixed;
+    bottom: 10px;
+    right: 120px;
+    background: #001133;
+    color: #4af;
+    border: 1px solid #4af;
+    padding: 6px 10px;
+    font-family: monospace;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  #fsBtn {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: #001133;
+    color: #4af;
+    border: 1px solid #4af;
+    padding: 6px 10px;
+    font-family: monospace;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  #devBtn {
+    position: fixed;
+    bottom: 10px;
+    right: 200px;
+    background: #001133;
+    color: #4af;
+    border: 1px solid #4af;
+    padding: 6px 10px;
+    font-family: monospace;
+    cursor: pointer;
+    z-index: 10;
+  }
 </style>
 </head>
 <body>
-<div id="wrap">
-  <canvas id="c"></canvas>
+
+<div id="game-wrap">
+  <div id="rotate-container">
+    <canvas id="c"></canvas>
+  </div>
   <div id="side" class="hidden dev-panel">
     <h3>EVENTS</h3>
     <div class="label">Game</div>
@@ -129,13 +155,11 @@ body {
   </div>
 </div>
 
+<button id="rotateBtn">ROTATE</button>
+<button id="fsBtn">FULLSCREEN</button>
+<button id="devBtn">DEV</button>
 
-  <button id="rotateBtn">ROTATE</button>
-  <button id="fsBtn">FULLSCREEN</button>
-  <button   id="devBtn">FULLSCREEN</button>
+<!-- Script is inlined via webpack -->
 
-  <!--- Script is inlined via webpack---> 
-  
-</body> 
-</html> 
- 
+</body>
+</html>
