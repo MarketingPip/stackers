@@ -218,6 +218,8 @@ class SoundManager {
     this._positions = {}; // store playback positions
     this._unlocked = false;
     this._queue = []; // sounds requested before unlock
+    // Silent 0.1s wav for context unlock (no audible output)
+    this._silent = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==");
   }
 
   preloadAll() {
@@ -238,25 +240,16 @@ class SoundManager {
   }
 
   unlock() {
-    if (this._unlocked) return;
-    this._unlocked = true;
+        if (this._unlocked) return;
+        this._unlocked = true;
 
-    // Mobile Safari/Chrome need every Audio element touched once
-    Object.keys(this._cache).forEach(key => {
-      const a = this._cache[key];
-      if (!a) return;
-      a.play()
-        .then(() => {
-          a.pause();
-          a.currentTime = 0;
-        })
-        .catch(() => {});
-    });
+        Object.values(this._cache).forEach(a => {
+            a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+        });
 
-    // Flush queued sounds
-    this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
-    this._queue = [];
-  }
+        this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
+        this._queue = [];
+    }
 
   play(key, loop = false, rate = null) {
     if (!SOUND_ENABLED) return;
@@ -416,6 +409,21 @@ let BOARD_TOP = 80; // px offset for header
 
 const sfx = new SoundManager();
 sfx.preloadAll(); // preload all sounds. 
+
+// ── Audio unlock ──
+const unlockAudio = (e) => {
+  sfx.unlock();
+  // Remove all variants so it only fires once
+  cv.removeEventListener("mousedown", unlockAudio, { capture: true });
+  cv.removeEventListener("touchstart", unlockAudio, { capture: true });
+  document.removeEventListener("keydown", unlockAudio, { capture: true });
+};
+
+cv.addEventListener("mousedown", unlockAudio, { capture: true, once: true });
+cv.addEventListener("touchstart", unlockAudio, { capture: true, once: true });
+document.addEventListener("keydown", unlockAudio, { capture: true, once: true });
+
+  
 // ── Prizes config ─────────────────────────────────────────────
 const PRIZES = [
   { label:"MAJOR PRIZE", color:"#4af", row:0  },
@@ -1951,10 +1959,6 @@ new ArcadeBooter(cv, ctx, ACTION_KEYS, () => {
     // This callback runs ONLY after the 6-second animation finishes
 
     setTimeout(() => {
-        // Unlock audio immediately on this user gesture
-        if (typeof sfx !== 'undefined' && sfx.unlock) {
-          sfx.unlock();
-        }
         const game = new Stacker(SETTINGS.credits_required);
         sfx.play("attract", true);
     }, 50); // wait to attach input to kick off attract mode
