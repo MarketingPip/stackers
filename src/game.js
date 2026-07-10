@@ -83,6 +83,17 @@ PRIZES: [
 };
 
 
+const IS_MOBILE = navigator.maxTouchPoints > 0;
+
+// Mobile performance settings
+const PERF = {
+    shadowBlur: IS_MOBILE ? 6 : 12,      // halve blur radius
+    maxParticles: IS_MOBILE ? 30 : 60,   // halve burst count
+    particleLifeDecay: IS_MOBILE ? 0.04 : 0.02, // particles die faster
+    scanlineAlpha: IS_MOBILE ? 0.02 : 0.04,     // fainter scanlines
+    crtVignette: !IS_MOBILE,             // skip CRT on mobile
+};
+
 window.addEventListener('DOMContentLoaded', async () => { 
 
 
@@ -538,7 +549,8 @@ class Particle {
     this.x=x; this.y=y; this.color=color;
     this.vx=(Math.random()-0.5)*6;
     this.vy=(Math.random()-0.7)*8;
-    this.life=1; this.decay=0.02+Math.random()*0.03;
+    this.life=1; 
+    this.decay=PERF.particleLifeDecay + Math.random() * (PERF.particleLifeDecay * 0.75);
     this.size=3+Math.random()*4;
   }
   update() { this.x+=this.vx; this.vy+=0.25; this.y+=this.vy; this.life-=this.decay; }
@@ -837,7 +849,7 @@ class Stacker {
       this._flash("MISS ×" + missed);
       // particles at dropped positions
       g.tmpDropped.forEach(d => {
-        for (let p=0;p<8;p++) this.particles.push(new Particle(
+        for (let p = 0; p < (IS_MOBILE ? 4 : 8); p++) this.particles.push(new Particle(
           PAD + d.x*CELL + CELL/2, BOARD_TOP + PAD + d.y*CELL + CELL/2, "#f84"
         ));
       });
@@ -845,7 +857,7 @@ class Stacker {
       sfx.play("place");
       this.score += g.pos.y === PRIZES[0].row ? 500 : g.pos.y === PRIZES[1].row ? 200 : 10 * (ROWS - g.pos.y);
       // particles for perfect place
-      for (let p=0;p<6;p++) this.particles.push(new Particle(
+      for (let p = 0; p < (IS_MOBILE ? 3 : 6); p++) this.particles.push(new Particle(
         PAD + (g.pos.x + Math.random()*g.rowLen)*CELL, BOARD_TOP + PAD + g.pos.y*CELL, "#4af"
       ));
     }
@@ -890,9 +902,12 @@ class Stacker {
         fireEvent("major", { board: g.board, score: this.score });
         this._flash("★ MAJOR PRIZE! ★");
         // big particle burst
-        for (let p=0;p<60;p++) this.particles.push(new Particle(
-          CW/2, BOARD_TOP + 40, ["#4af","#ff4","#f4f","#4f4","#fa4"][p%5]
-        ));
+        for (let p = 0; p < PERF.maxParticles; p++) {
+            this.particles.push(new Particle(
+                CW/2, BOARD_TOP + 40, 
+                ["#4af","#ff4","#f4f","#4f4","#fa4"][p % 5]
+            ));
+        }
         g.loseTmSt = 5000;
       }
       g.endTime = g.loseTmSt;
@@ -1442,7 +1457,7 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
           ctx.save();
           ctx.globalAlpha = alpha * 0.55;
           ctx.shadowColor = primary;
-          ctx.shadowBlur = 14;
+          ctx.shadowBlur = PERF.shadowBlur;
           ctx.fillStyle = primary;
 
           ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
@@ -1602,7 +1617,7 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
   const titleColor = h.title ?? "#4af";
   ctx.fillStyle = titleColor;
   ctx.shadowColor = titleColor; 
-  ctx.shadowBlur = 12;
+  ctx.shadowBlur = PERF.shadowBlur;
   ctx.fillText("STACKER", CW / 2, 34);
   ctx.shadowBlur = 0;
 
@@ -1668,7 +1683,7 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
 
         ctx.fillStyle = grd;
         ctx.shadowColor = style.shadow ?? "#4af";
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = PERF.shadowBlur;
       } else {
         ctx.fillStyle = style.empty ?? "#011";
         ctx.shadowBlur = 0;
@@ -1757,7 +1772,8 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
     ctx.textAlign = "center";
     ctx.font = "bold 16px 'Courier New'";
     ctx.fillStyle = "#fff";
-    ctx.shadowColor = "#4af"; ctx.shadowBlur = 16;
+    ctx.shadowColor = "#4af"; 
+    ctx.shadowBlur = PERF.shadowBlur;
     ctx.fillText(this.flashMsg, CW/2, BOARD_TOP + 30);
     ctx.shadowBlur=0;
     ctx.restore();
@@ -1766,7 +1782,7 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
   // ── Scanlines ─────────────────────────────────────────────────
   _drawScanlines() {
     ctx.save();
-    ctx.globalAlpha = 0.04;
+    ctx.globalAlpha = PERF.scanlineAlpha;
     ctx.fillStyle = "#000";
     for (let y=0;y<CH;y+=2) ctx.fillRect(0,y,CW,1);
     ctx.restore();
@@ -1774,6 +1790,7 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
 
   // ── CRT vignette ──────────────────────────────────────────────
   _drawCRT() {
+    if (!PERF.crtVignette) return;  // SKIP entirely on mobile
     const vg = ctx.createRadialGradient(CW/2,CH/2,CH*0.3,CW/2,CH/2,CH*0.9);
     vg.addColorStop(0,"rgba(0,0,0,0)");
     vg.addColorStop(1,"rgba(0,0,0,0.55)");
