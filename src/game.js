@@ -1995,147 +1995,36 @@ window.STACKER = {
   fireAction: async () => game._action({}),
 };
 
-
-/// UI For Buttons  
+  
 let rotated = false;
-let fitTimeout = null;
 
 function fitToScreen() {
-  clearTimeout(fitTimeout);
-  fitTimeout = setTimeout(_doFit, 100);
-}
+  const margin = 0;
 
-function _doFit() {
+  const wrap = document.getElementById('wrap');
   const cv = document.getElementById('c');
   const side = document.getElementById('side');
-  const wrap = document.getElementById('wrap');
 
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  // Calculate available width and height for the canvas
+  const availableWidth = window.innerWidth - side.offsetWidth - margin - 16; // 16 = gap
+  const availableHeight = window.innerHeight - margin;
 
-  // Get side panel width
-  const sideW = side.classList.contains('hidden') ? 0 : side.offsetWidth + 16;
+  const scaleX = availableWidth / CW;
+  const scaleY = availableHeight / CH;
 
-  if (rotated) {
-    // In rotated mode, we want the canvas to fill the viewport in landscape
-    // The canvas internal dimensions are CW (width) x CH (height)
-    // When rotated 90deg, visual width = CH, visual height = CW
-    
-    const availW = vh;  // viewport height becomes available width
-    const availH = vw;  // viewport width becomes available height
+  const scale = Math.min(scaleX, scaleY);
 
-    // Scale to fit the rotated canvas
-    const scaleX = availW / CH;
-    const scaleY = availH / CW;
-    const scale = Math.min(scaleX, scaleY);
+  cv.style.width = `${CW * scale}px`;
+  cv.style.height = `${CH * scale}px`;
+ 
+ 
 
-    // Set canvas CSS size to the ROTATED dimensions
-    // The canvas element itself is rotated, so its CSS width/height
-    // should match the unrotated dimensions, then transform handles the rest
-    const cssW = CH * scale;
-    const cssH = CW * scale;
-
-    cv.style.width = `${cssW}px`;
-    cv.style.height = `${cssH}px`;
-    cv.style.transform = 'rotate(90deg)';
-    
-    // Center the rotated canvas
-    // After rotation, the element's corner is at center, so we offset
-    const offsetX = (cssH - cssW) / 2;
-    const offsetY = (cssW - cssH) / 2;
-    cv.style.marginLeft = `${offsetX}px`;
-    cv.style.marginTop = `${offsetY}px`;
-
-    wrap.style.flexDirection = 'column';
-    wrap.style.alignItems = 'center';
-    wrap.style.justifyContent = 'center';
-
-  } else {
-    // Normal mode
-    const availW = vw - sideW;
-    const availH = vh;
-
-    const scaleX = availW / CW;
-    const scaleY = availH / CH;
-    const scale = Math.min(scaleX, scaleY);
-
-    cv.style.width = `${CW * scale}px`;
-    cv.style.height = `${CH * scale}px`;
-    cv.style.transform = 'none';
-    cv.style.marginLeft = '0';
-    cv.style.marginTop = '0';
-
-    wrap.style.flexDirection = 'row';
-    wrap.style.alignItems = 'flex-start';
-  }
+  // Keep canvas in normal flow
+  cv.style.position = "relative";
 }
-
-// Touch coordinate mapping for rotated canvas
-function getCanvasCoordinates(e, canvas) {
-  const rect = canvas.getBoundingClientRect();
-  let clientX, clientY;
-
-  if (e.touches && e.touches.length > 0) {
-    clientX = e.touches[0].clientX;
-    clientY = e.touches[0].clientY;
-  } else {
-    clientX = e.clientX;
-    clientY = e.clientY;
-  }
-
-  // Raw position within the CSS box (before transform)
-  const rawX = clientX - rect.left;
-  const rawY = clientY - rect.top;
-
-  // The canvas is rotated 90deg clockwise
-  // CSS width = CH*scale, CSS height = CW*scale (swapped from internal)
-  // Internal CW x CH maps to visual CSS box of CH*scale x CW*scale
-  
-  // For a 90deg clockwise rotation:
-  // Visual (x,y) -> Internal (y, CW - x) * scale factor
-  const scale = rect.width / CH; // = rect.height / CW
-  
-  let x, y;
-  
-  if (rotated) {
-    // Map from visual CSS coordinates to internal canvas coordinates
-    x = rawY / scale;
-    y = (CW - rawX) / scale;
-  } else {
-    x = rawX / scale;
-    y = rawY / scale;
-  }
-
-  return { x, y };
-}
-
-// Rotate button
-const rotateBtn = document.getElementById('rotateBtn');
-const devBtn = document.getElementById('devBtn');
-
-rotateBtn.onclick = () => {
-  rotated = !rotated;
-  const side = document.getElementById('side');
-
-  if (rotated) {
-    side.classList.add('hidden');
-    devBtn.classList.add('hidden');
-  } else {
-    side.classList.remove('hidden');
-    devBtn.classList.remove('hidden');
-  }
-
-  fitToScreen();
-};
-
-devBtn.onclick = () => {
-  const devPanel = document.querySelector('.dev-panel');
-  devPanel.classList.toggle('hidden');
-};
-
-window.addEventListener('resize', fitToScreen);
-window.addEventListener('orientationchange', fitToScreen);
-fitToScreen();
+   
+window.addEventListener("resize", fitToScreen);
+fitToScreen(); 
  
 /*
   HARDWARE INTEGRATION EXAMPLE (Arduino via WebSerial / WebHID):
@@ -2155,8 +2044,43 @@ fitToScreen();
 */
 
 
-// Full Screen 
-  
+
+/// UI For Buttons
+
+const rotateBtn = document.getElementById("rotateBtn");
+
+const devBtn = document.getElementById("devBtn");
+
+devBtn.onclick = () => {
+  const devPanel = document.querySelector('.dev-panel');
+  devPanel.classList.toggle('hidden')
+} 
+
+rotateBtn.onclick = () => {
+  rotated = !rotated;
+const side = document.getElementById('side');
+  const wrap = document.getElementById('wrap');
+  // Optional rotation
+  if (rotated) {
+    cv.style.transform = "rotate(90deg)";
+    cv.style.transformOrigin = "center center";
+    side.classList.add("hidden")
+     devBtn.classList.add("hidden")
+    //side.style.transform = "rotate(90deg)";
+   // side.style.transformOrigin = "center center";
+    //wrap.style["align-items"] = "flex-end";
+    fitToScreen(); 
+  } else {
+    devBtn.classList.remove("hidden")
+    cv.style.transform = "none";
+   // wrap.style["align-items"] = "flex-start";
+    side.classList.remove("hidden")
+    fitToScreen(); 
+  }
+};
+
+
+
 if (isElectron && SETTINGS.fullscreen && !document.fullscreenElement) {
     await document.documentElement.requestFullscreen();
 }   
@@ -2184,6 +2108,4 @@ const fsBtn = document.getElementById("fsBtn");
 fsBtn.onclick = () => {
  toggleFullscreen();
 };  
-
-// End of event
 });
