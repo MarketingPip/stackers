@@ -674,6 +674,7 @@ class Stacker {
   // ── Input ────────────────────────────────────────────────────
  _bindInput() {
     cv.addEventListener("click", async (e) => {
+      if (navigator.maxTouchPoints > 0) return; // ignore synthetic clicks on touch devices
       await this._action(e);
     });
   
@@ -693,14 +694,17 @@ class Stacker {
       }
     });
   
-    cv.addEventListener(
-      "touchstart",
-       (e) => {
-        e.preventDefault();
+    // Mobile: use touch only
+    cv.addEventListener("touchstart", (e) => {
+        e.preventDefault();           // stop scroll AND the delayed click
+        e.stopImmediatePropagation();   // extra safety
+
+        const now = Date.now();
+        if (now - this._lastTap < 350) return; // debounce
+        this._lastTap = now;
+
         this._action(e);
-      },
-      { passive: false }
-    );
+    }, { passive: false });
   }
   
   async _action(e) {
