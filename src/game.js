@@ -1995,36 +1995,124 @@ window.STACKER = {
   fireAction: async () => game._action({}),
 };
 
-  
+
+/// UI For Buttons  
 let rotated = false;
+let fitTimeout = null;
 
 function fitToScreen() {
-  const margin = 0;
+  clearTimeout(fitTimeout);
+  fitTimeout = setTimeout(_doFit, 100);
+}
 
-  const wrap = document.getElementById('wrap');
+function _doFit() {
+  const gameWrap = document.getElementById('game-wrap');
+  const container = document.getElementById('rotate-container');
   const cv = document.getElementById('c');
   const side = document.getElementById('side');
 
-  // Calculate available width and height for the canvas
-  const availableWidth = window.innerWidth - side.offsetWidth - margin - 16; // 16 = gap
-  const availableHeight = window.innerHeight - margin;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
 
-  const scaleX = availableWidth / CW;
-  const scaleY = availableHeight / CH;
+  if (rotated) {
+    // Rotated: canvas visual dimensions are swapped
+    // CW = canvas width, CH = canvas height (from your game constants)
+    const availW = vh;  // viewport height becomes visual width
+    const availH = vw;  // viewport width becomes visual height
 
-  const scale = Math.min(scaleX, scaleY);
+    const scaleX = availW / CH;
+    const scaleY = availH / CW;
+    const scale = Math.min(scaleX, scaleY);
 
-  cv.style.width = `${CW * scale}px`;
-  cv.style.height = `${CH * scale}px`;
- 
- 
+    // Size container to the rotated canvas
+    container.style.width = `${CH * scale}px`;
+    container.style.height = `${CW * scale}px`;
 
-  // Keep canvas in normal flow
-  cv.style.position = "relative";
+    container.classList.add('rotated');
+
+  } else {
+    const sideW = side.classList.contains('hidden') ? 0 : side.offsetWidth;
+    const availW = vw - sideW - 16;
+    const availH = vh;
+
+    const scaleX = availW / CW;
+    const scaleY = availH / CH;
+    const scale = Math.min(scaleX, scaleY);
+
+    container.style.width = `${CW * scale}px`;
+    container.style.height = `${CH * scale}px`;
+
+    container.classList.remove('rotated');
+  }
+
+  // Canvas fills its container
+  cv.style.width = '100%';
+  cv.style.height = '100%';
 }
-   
-window.addEventListener("resize", fitToScreen);
-fitToScreen(); 
+
+window.addEventListener('resize', fitToScreen);
+window.addEventListener('orientationchange', fitToScreen);
+
+// Touch coordinate mapping
+function getCanvasCoordinates(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  let clientX, clientY;
+
+  if (e.touches && e.touches.length > 0) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+
+  let x = clientX - rect.left;
+  let y = clientY - rect.top;
+
+  // Map to rotated canvas space
+  if (rotated) {
+    const tempX = x;
+    x = y;
+    y = (rect.height) - tempX;
+  }
+
+  // Scale to internal canvas resolution
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  return {
+    x: x * scaleX,
+    y: y * scaleY
+  };
+}
+
+// Rotate button
+const rotateBtn = document.getElementById('rotateBtn');
+const devBtn = document.getElementById('devBtn');
+
+rotateBtn.onclick = () => {
+  rotated = !rotated;
+  const side = document.getElementById('side');
+  const devBtn = document.getElementById('devBtn');
+
+  if (rotated) {
+    side.classList.add('hidden');
+    devBtn.classList.add('hidden');
+  } else {
+    side.classList.remove('hidden');
+    devBtn.classList.remove('hidden');
+  }
+
+  fitToScreen();
+};
+
+devBtn.onclick = () => {
+  const devPanel = document.querySelector('.dev-panel');
+  devPanel.classList.toggle('hidden');
+};
+
+// Initial fit
+fitToScreen();
  
 /*
   HARDWARE INTEGRATION EXAMPLE (Arduino via WebSerial / WebHID):
@@ -2044,43 +2132,8 @@ fitToScreen();
 */
 
 
-
-/// UI For Buttons
-
-const rotateBtn = document.getElementById("rotateBtn");
-
-const devBtn = document.getElementById("devBtn");
-
-devBtn.onclick = () => {
-  const devPanel = document.querySelector('.dev-panel');
-  devPanel.classList.toggle('hidden')
-} 
-
-rotateBtn.onclick = () => {
-  rotated = !rotated;
-const side = document.getElementById('side');
-  const wrap = document.getElementById('wrap');
-  // Optional rotation
-  if (rotated) {
-    cv.style.transform = "rotate(90deg)";
-    cv.style.transformOrigin = "center center";
-    side.classList.add("hidden")
-     devBtn.classList.add("hidden")
-    //side.style.transform = "rotate(90deg)";
-   // side.style.transformOrigin = "center center";
-    //wrap.style["align-items"] = "flex-end";
-    fitToScreen(); 
-  } else {
-    devBtn.classList.remove("hidden")
-    cv.style.transform = "none";
-   // wrap.style["align-items"] = "flex-start";
-    side.classList.remove("hidden")
-    fitToScreen(); 
-  }
-};
-
-
-
+// Full Screen 
+  
 if (isElectron && SETTINGS.fullscreen && !document.fullscreenElement) {
     await document.documentElement.requestFullscreen();
 }   
@@ -2108,4 +2161,6 @@ const fsBtn = document.getElementById("fsBtn");
 fsBtn.onclick = () => {
  toggleFullscreen();
 };  
+
+// End of event
 });
