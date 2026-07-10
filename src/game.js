@@ -215,16 +215,40 @@ class SoundManager {
   constructor() {
     this._cache = {};
     this._current = null;
-    this._positions = {}; // store playback positions
+    this._positions = {};
     this._unlocked = false;
-    this._queue = []; // sounds requested before unlock
-    // Silent 0.1s wav for context unlock (no audible output)
+    this._queue = [];
     this._silent = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==");
+    this._preloadReady = false;
   }
 
   preloadAll() {
     if (!SOUND_ENABLED) return;
-    Object.keys(SFX_MAP).forEach(key => this._load(key));
+
+    const keys = Object.keys(SFX_MAP);
+    let loaded = 0;
+
+    keys.forEach(key => {
+      const a = this._load(key);
+      if (!a) return;
+
+      // Wait for enough data to play without stutter
+      a.addEventListener('canplaythrough', () => {
+        loaded++;
+        if (loaded >= keys.length) {
+          this._preloadReady = true;
+          console.log("All sounds preloaded");
+        }
+      }, { once: true });
+
+      // Fallback: if already cached by browser, fire manually
+      if (a.readyState >= 4) {
+        loaded++;
+      }
+    });
+
+    // Safety: don't block forever if some files 404
+    setTimeout(() => { this._preloadReady = true; }, 5000);
   }
 
   _load(key) {
@@ -240,24 +264,36 @@ class SoundManager {
   }
 
   unlock() {
-      if (this._unlocked) return;
-      this._unlocked = true;
-  
-      this._silent.play()
-          .then(() => { this._silent.pause(); this._silent.currentTime = 0; })
-          .catch(() => {});
-  
-      // Now flush anything that was waiting
-      this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
-      this._queue = [];
+    if (this._unlocked) return;
+    this._unlocked = true;
+
+    this._silent.play()
+      .then(() => { this._silent.pause(); this._silent.currentTime = 0; })
+      .catch(() => {});
+
+    this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
+    this._queue = [];
   }
 
   play(key, loop = false, rate = null) {
     if (!SOUND_ENABLED) return;
+
+    // If locked, queue it
     if (!this._unlocked) {
       this._queue.push({ key, loop, rate });
       return;
     }
+
+    // If not preloaded yet, wait for it
+    const a = this._load(key);
+    if (a && a.readyState < 3) {
+      // Audio not ready — defer play until loaded
+      a.addEventListener('canplaythrough', () => {
+        this._playNow(key, loop, rate);
+      }, { once: true });
+      return;
+    }
+
     this._playNow(key, loop, rate);
   }
 
@@ -267,12 +303,9 @@ class SoundManager {
 
     a.loop = loop;
     if (rate) a.playbackRate = rate;
-
-    // Resume from saved position if any
     a.currentTime = this._positions[key] || 0;
 
     a.play().catch(e => {
-      // If it fails even after unlock, log but don't break state
       console.warn(`Playback failed for ${key}:`, e);
     });
   }
