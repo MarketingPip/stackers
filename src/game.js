@@ -892,50 +892,51 @@ class Stacker {
 }
 
   // ── Place row ────────────────────────────────────────────────
-  _placeRow(e) {
-      const g = this;
-      if (g.placeTime !== 0) return;
-      if (g.board[g.pos.y].indexOf(1) === -1) return;
-      
-      stopRowBlockSounds();
-      
-      let missed = 0;
-      const losDff = 0 - g.pos.x;
-      const rosDff = (g.pos.x + g.rowLen) - COLS;
-      if (losDff > 0) g.rowLen -= losDff;
-      else if (rosDff > 0) g.rowLen -= rosDff;
-  
-      if (g.pos.y < ROWS-1) {
-          g.tmpDropped = [];
-          let mi = 0;
-          for (let m = 0; m < COLS; m++) {
-              if (g.board[g.pos.y][m] > g.board[g.pos.y+1][m]) {
-                  let b2bGap = 0;
-                  for (let df = 0; df < (ROWS-1)-g.pos.y; df++) {
-                      if (g.board[g.pos.y+df+1][m] !== 1) b2bGap++;
-                  }
-                  g.tmpDropped[mi++] = {x: m, y: g.pos.y, gap: b2bGap};
-                  g.blocksDropped.push({x: m, y: g.pos.y, gap: b2bGap});
-                  missed++;
-              }
+ _placeRow(e) {
+    const g = this;
+    if (g.placeTime !== 0) return;
+    if (g.board[g.pos.y].indexOf(1) === -1) return;
+    stopRowBlockSounds();
+    let missed = 0;
+    const losDff = 0 - g.pos.x;
+    const rosDff = (g.pos.x + g.rowLen) - COLS;
+    if (losDff > 0)      g.rowLen -= losDff;
+    else if (rosDff > 0) g.rowLen -= rosDff;
+
+    if (g.pos.y < ROWS-1) {
+      g.tmpDropped = [];
+      let mi = 0;
+      for (let m=0; m<COLS; m++) {
+        if (g.board[g.pos.y][m] > g.board[g.pos.y+1][m]) {
+          let b2bGap = 0;
+          for (let df=0; df<(ROWS-1)-g.pos.y; df++) {
+            if (g.board[g.pos.y+df+1][m]!==1) b2bGap++;
           }
-          g.tmpDropped.sort((a, b) => b.gap - a.gap);
-          g.rowLen -= missed;
+          g.tmpDropped[mi++] = {x:m, y:g.pos.y, gap:b2bGap};
+          g.blocksDropped.push({x:m, y:g.pos.y, gap:b2bGap});
+          missed++;
+        }
       }
-  
-      // Play sounds in order of priority, with small delays to prevent iOS audio thread clog
+      g.tmpDropped.sort((a,b)=>b.gap-a.gap);
+      //const maxGap = (ROWS-1) - g.pos.y;
+
+      g.rowLen -= missed;
+       
+     
       
-      if (g.rowLen != 0 && missed != 0) {
-          sfx.play("blockFall");
-      }
+     
+      
+    }
   
-      // Woo: play immediately if warmed, iOS won't delay it
-      if (g.pos.y != 14 && g.rowLen != 0 && missed === 0) {
-          // Use setTimeout 0 to push to next tick, letting block sounds stop first
-          setTimeout(() => sfx.play("vo_woohoo"), 0);
+     if(g.rowLen != 0 && missed != 0){
+        sfx.play("blockFall");
       }
-  
-      fireEvent("place", { row: g.pos.y, rowLen: g.rowLen, missed });
+     
+      // play woo unless first row (same as arcade game)
+      if(g.pos.y != 14 && g.rowLen != 0 && missed === 0){
+        sfx.play("vo_woohoo");
+      }
+    fireEvent("place", { row: g.pos.y, rowLen: g.rowLen, missed });
 
     if (missed > 0) {
       sfx.play("miss");
