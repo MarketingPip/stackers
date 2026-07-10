@@ -240,16 +240,17 @@ class SoundManager {
   }
 
   unlock() {
-        if (this._unlocked) return;
-        this._unlocked = true;
-
-        Object.values(this._cache).forEach(a => {
-            a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
-        });
-
-        this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
-        this._queue = [];
-    }
+      if (this._unlocked) return;
+      this._unlocked = true;
+  
+      this._silent.play()
+          .then(() => { this._silent.pause(); this._silent.currentTime = 0; })
+          .catch(() => {});
+  
+      // Now flush anything that was waiting
+      this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
+      this._queue = [];
+  }
 
   play(key, loop = false, rate = null) {
     if (!SOUND_ENABLED) return;
