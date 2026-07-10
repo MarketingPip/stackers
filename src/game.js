@@ -213,63 +213,76 @@ const SFX_MAP = {
   
 class SoundManager {
   constructor() {
-    this._cache = {};
-    this._current = null;
+    this._ctx = null;
+    this._buffers = {};
+    this._sources = {};
+    this._gains = {};
     this._positions = {};
     this._unlocked = false;
     this._queue = [];
-    this._silent = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==");
-    this._preloadReady = false;
+    this._decodePromises = {};
+    this._masterGain = null;
+    this._initAttempted = false;
   }
 
-  preloadAll() {
+  _initCtx() {
+    if (this._ctx) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    this._ctx = new AudioContext();
+    this._masterGain = this._ctx.createGain();
+    this._masterGain.connect(this._ctx.destination);
+    this._masterGain.gain.value = 1.0;
+    this._initAttempted = true;
+  }
+
+  async preloadAll() {
     if (!SOUND_ENABLED) return;
+    this._initCtx();
 
     const keys = Object.keys(SFX_MAP);
-    let loaded = 0;
+    await Promise.all(keys.map(key => this._decode(key)));
+  }
 
-    keys.forEach(key => {
-      const a = this._load(key);
-      if (!a) return;
+  async _decode(key) {
+    if (this._buffers[key]) return;
+    if (this._decodePromises[key]) return this._decodePromises[key];
 
-      // Wait for enough data to play without stutter
-      a.addEventListener('canplaythrough', () => {
-        loaded++;
-        if (loaded >= keys.length) {
-          this._preloadReady = true;
-          console.log("All sounds preloaded");
-        }
-      }, { once: true });
-
-      // Fallback: if already cached by browser, fire manually
-      if (a.readyState >= 4) {
-        loaded++;
+    const path = SFX_PATH + encodeURI(SFX_MAP[key]);
+    this._decodePromises[key] = (async () => {
+      try {
+        const response = await fetch(path);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await this._ctx.decodeAudioData(arrayBuffer);
+        this._buffers[key] = audioBuffer;
+      } catch (e) {
+        console.warn(`Failed to decode ${key}:`, e);
       }
-    });
+    })();
 
-    // Safety: don't block forever if some files 404
-    setTimeout(() => { this._preloadReady = true; }, 5000);
+    return this._decodePromises[key];
   }
 
-  _load(key) {
-    if (!SOUND_ENABLED) return null;
-    if (!this._cache[key]) {
-      const path = SFX_PATH + encodeURI(SFX_MAP[key]);
-      const a = new Audio(path);
-      a.preload = "auto";
-      a.load();
-      this._cache[key] = a;
-    }
-    return this._cache[key];
-  }
-
+  // CRITICAL FIX: iOS requires resume() inside the user gesture handler
   unlock() {
-    if (this._unlocked) return;
-    this._unlocked = true;
+    if (this._unlocked) {
+      // Still try to resume in case iOS suspended us again
+      if (this._ctx && this._ctx.state === 'suspended') {
+        this._ctx.resume();
+      }
+      return;
+    }
 
-    this._silent.play()
-      .then(() => { this._silent.pause(); this._silent.currentTime = 0; })
-      .catch(() => {});
+    this._unlocked = true;
+    this._initCtx();
+
+    // THIS IS THE KEY LINE for iOS Safari
+    if (this._ctx.state === 'suspended') {
+      this._ctx.resume().then(() => {
+        console.log('AudioContext resumed');
+      }).catch(err => {
+        console.warn('AudioContext resume failed:', err);
+      });
+    }
 
     this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
     this._queue = [];
@@ -278,19 +291,21 @@ class SoundManager {
   play(key, loop = false, rate = null) {
     if (!SOUND_ENABLED) return;
 
-    // If locked, queue it
+    // If AudioContext is suspended (iOS backgrounded us), try to resume
+    if (this._ctx && this._ctx.state === 'suspended') {
+      this._ctx.resume().catch(() => {});
+    }
+
     if (!this._unlocked) {
       this._queue.push({ key, loop, rate });
       return;
     }
 
-    // If not preloaded yet, wait for it
-    const a = this._load(key);
-    if (a && a.readyState < 3) {
-      // Audio not ready — defer play until loaded
-      a.addEventListener('canplaythrough', () => {
-        this._playNow(key, loop, rate);
-      }, { once: true });
+    if (!this._buffers[key]) {
+      // Wait for decode, then play
+      this._decode(key).then(() => {
+        if (this._unlocked) this._playNow(key, loop, rate);
+      });
       return;
     }
 
@@ -298,47 +313,77 @@ class SoundManager {
   }
 
   _playNow(key, loop = false, rate = null) {
-    const a = this._load(key);
-    if (!a) return;
+    if (!this._ctx) this._initCtx();
+    if (this._ctx.state === 'suspended') return; // iOS blocked us
 
-    a.loop = loop;
-    if (rate) a.playbackRate = rate;
-    a.currentTime = this._positions[key] || 0;
+    const buffer = this._buffers[key];
+    if (!buffer) return;
 
-    a.play().catch(e => {
-      console.warn(`Playback failed for ${key}:`, e);
-    });
+    if (this._sources[key]) {
+      try { this._sources[key].stop(); } catch (e) {}
+    }
+
+    const source = this._ctx.createBufferSource();
+    const gain = this._ctx.createGain();
+
+    source.buffer = buffer;
+    source.loop = loop;
+    if (rate) source.playbackRate.value = rate;
+
+    source.connect(gain);
+    gain.connect(this._masterGain);
+
+    this._sources[key] = source;
+    this._gains[key] = gain;
+
+    const startPos = this._positions[key] || 0;
+    source.start(0, startPos);
+    this._positions[key] = 0;
+
+    source.onended = () => {
+      if (this._sources[key] === source) {
+        this._sources[key] = null;
+      }
+    };
   }
 
   stop(key) {
-    const a = this._cache[key];
-    if (a) {
-      a.pause();
-      a.currentTime = 0;
-      this._positions[key] = 0;
+    if (this._sources[key]) {
+      try { this._sources[key].stop(); } catch (e) {}
+      this._sources[key] = null;
     }
+    this._positions[key] = 0;
   }
 
   stopAll(preserveKeys = []) {
-    Object.keys(this._cache).forEach(key => {
-      const a = this._cache[key];
-      if (!a) return;
+    Object.keys(this._sources).forEach(key => {
+      if (!this._sources[key]) return;
       if (preserveKeys.includes(key)) {
-        this._positions[key] = a.currentTime;
-        a.pause();
+        this._positions[key] = this._ctx.currentTime;
+        try { this._sources[key].stop(); } catch (e) {}
       } else {
-        a.pause();
-        a.currentTime = 0;
+        try { this._sources[key].stop(); } catch (e) {}
         this._positions[key] = 0;
       }
+      this._sources[key] = null;
     });
   }
 
   resume(key) {
-    const a = this._cache[key];
-    if (a) {
-      a.currentTime = this._positions[key] || 0;
-      a.play().catch(e => console.warn(`Resume failed for ${key}:`, e));
+    if (this._positions[key] > 0) {
+      this._playNow(key, false, null);
+    }
+  }
+
+  setVolume(key, val) {
+    if (this._gains[key]) {
+      this._gains[key].gain.value = Math.max(0, Math.min(1, val));
+    }
+  }
+
+  setMasterVolume(val) {
+    if (this._masterGain) {
+      this._masterGain.gain.value = Math.max(0, Math.min(1, val));
     }
   }
 }
@@ -1985,17 +2030,18 @@ class ArcadeBooter  {
       
     }
 
-    requestAnimationFrame(() => this.render());
+    this.render();
   }
 }
  
 new ArcadeBooter(cv, ctx, ACTION_KEYS, () => {
     // This callback runs ONLY after the 6-second animation finishes
-
+  requestAnimationFrame(() => {
     setTimeout(() => {
         const game = new Stacker(SETTINGS.credits_required);
         sfx.play("attract", true);
     }, 50); // wait to attach input to kick off attract mode
+  });
 }); 
   
 // ── External API for Arduino / hardware integration ───────────
