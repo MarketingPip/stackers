@@ -1615,7 +1615,7 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
   
  _drawBitmapOnGrid(bitmap, color = "#4af", alpha = 0.85, glow = 14) {
 
-   if(this.currentTheme != "default"){
+   if(this.currentTheme != defaultSettings.theme){
     color = this.currentTheme.title;
    };
   // 1. Calculate the starting row so the bitmap's center 
