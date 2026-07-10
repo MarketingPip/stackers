@@ -155,6 +155,11 @@ const theme_query = new URLSearchParams(location.search).get("theme");
 if (theme_query && Object.hasOwn(THEMES, theme_query)) {
   SETTINGS.theme = theme_query;
 };
+
+// ── Button config ─────────────────────────────────────────────
+const ACTION_KEYS = {main_button:["NumpadEnter", "Enter"], continue_btn:["Space"], coin_insert:["KeyC"]}  
+  
+
   
   
 // ── Sound config ─────────────────────────────────────────────
@@ -214,7 +219,6 @@ class SoundManager {
   }
 
   preloadAll() {
-    console.log(SOUND_ENABLED);
     if (!SOUND_ENABLED) return;
 
     console.log("Preloading all sound effects...");
@@ -691,9 +695,7 @@ class Stacker {
       await this._action(e);
     });
   
-    document.addEventListener("keydown", async (e) => {     
-      const ACTION_KEYS = {main_button:["NumpadEnter", "Enter"], continue_btn:["Space"], coin_insert:["KeyC"]}
-       
+    document.addEventListener("keydown", async (e) => {        
       if (ACTION_KEYS.main_button.includes(e.code)) {
         e.preventDefault();
         await this._action();
@@ -1802,9 +1804,10 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
 // ── Boot ──────────────────────────────────────────────────────
   
 class ArcadeBooter  {
-  constructor(canvas, context, onComplete) {
+  constructor(canvas, context, tap_button, onComplete) {
     this.cv = canvas;
     this.ctx = context;
+    this.tap_button = tap_button;
     this.onComplete = onComplete;
     this.startTime = Date.now();
 
@@ -1828,13 +1831,20 @@ class ArcadeBooter  {
     if(isElectron === false){
     this.cv.addEventListener("mousedown", this.handleInput);
     this.cv.addEventListener("touchstart", this.handleInput);
+    this.tap_button.addEventListener("keydown", this.handleInput); 
+    
     };
     this.render();
   }
 
-  handleInput() {
+  handleInput(e) {
     if (this.waitingForTap && !this.onCompleteCalled || isElectron === true && !this.onCompleteCalled) {
+       if (!this.tap_button.includes(e.code)) {
+         return;
+       }
+ 
       this.onCompleteCalled = true;
+      this.tap_button.removeEventListener("keydown", this.handleInput);
       this.cv.removeEventListener("mousedown", this.handleInput);
       this.cv.removeEventListener("touchstart", this.handleInput);
       this.onComplete();
@@ -1917,7 +1927,7 @@ class ArcadeBooter  {
   }
 }
  
- new ArcadeBooter(cv, ctx, () => {
+ new ArcadeBooter(cv, ctx, ACTION_KEYS.main_button, f() => {
   // This callback runs ONLY after the 6-second animation finishes
   
     setTimeout(() => {
