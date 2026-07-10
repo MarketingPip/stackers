@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # ✅ Build step
+      # ✅ Build step - Note we removed --publish=never so builder can prep files
       - name: Build Electron App
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,34 +40,6 @@ jobs:
           fi
         shell: bash
 
-      # Create platform-specific release archives
-      - name: Create Windows Release Zip
-        if: matrix.os == 'windows-latest'
-        shell: powershell
-        run: |
-          # Option A: Zip the unpacked app folder (recommended for portable use)
-          $source = "dist/win-ia32-unpacked"
-          if (Test-Path $source) {
-            Compress-Archive -Path "$source\*" -DestinationPath "dist/openstacker_win.zip" -Force
-          } else {
-            # Fallback: zip all .exe files in dist
-            Get-ChildItem -Path "dist" -Filter "*.exe" | ForEach-Object {
-              Compress-Archive -Path $_.FullName -DestinationPath "dist/openstacker_win.zip" -Force
-            }
-          }
-
-      - name: Create Linux Release Tarball
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          # Option A: Tar the unpacked app folder
-          if [ -d "dist/linux-unpacked" ]; then
-            tar -czf dist/openstacker_linux.tar.gz -C dist/linux-unpacked .
-          else
-            # Fallback: tar all Linux artifacts (.AppImage, .deb)
-            cd dist
-            tar -czf openstacker_linux.tar.gz *.AppImage *.deb 2>/dev/null || tar -czf openstacker_linux.tar.gz .
-          fi
-        shell: bash
 
       # Generate the ESM Library from CommonJS source
       - name: Build ESM Library
@@ -84,19 +56,16 @@ jobs:
           git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update esm library bundle [skip ci]" && git push)
         shell: bash
 
-      # ✅ Upload to a single release with specific archive names
+      # ✅ Upload to a single release (This action handles the release creation)
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            dist/openstacker_win.zip
-            dist/openstacker_linux.tar.gz
             dist/*.exe
             dist/*.AppImage
             dist/*.deb
-            dist/*.zip
             dist/**/*.zip
           draft: false
           prerelease: false
