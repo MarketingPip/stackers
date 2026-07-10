@@ -600,7 +600,7 @@ class Stacker {
     this.pauseActions = false;
     this.board = [];
     this.pos = {x:0, y:ROWS-1};
-    this.currentTheme = "cyberpunk"
+    this.currentTheme = SETTINGS.theme;
     this.dir = "r";
     this.rowLen = 3; // (user can set blocks to start with here via settings)
     this.moveInterval = 100;
