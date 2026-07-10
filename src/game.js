@@ -1005,36 +1005,36 @@ _simulatePlay(dt) {
   // ═══════════════════════════════════════════════════════════
   //  MAIN LOOP
   // ═══════════════════════════════════════════════════════════
-  _loop(ts) {
+_loop(ts) {
     const dt = Math.min(ts - this._lastTs, 50);
     this._lastTs = ts;
     this._frame++;
     this.scanline = (this.scanline + 0.5) % CH;
 
     if (this.flashTm > 0) this.flashTm -= dt;
- 
+
     this.particles = this.particles.filter(p => p.life > 0);
     this.particles.forEach(p => p.update());
-  
-   if (this.state === STATE.ATTRACT || this.state === STATE.STARTING) {
-  this._updateAttract(dt);
-     
-}
-else if (this.state === STATE.PLAYING) {
-  this._updatePlaying(dt);
 
-  // 👇 Demo AI runs only while playing
-  if (this.demoActive) {
-    this._simulatePlay(dt);
-  }
-}
-else if (this.state === STATE.GAMEOVER) {
-  this._updateGameover(dt);
-}
+    if (this.state === STATE.ATTRACT || this.state === STATE.STARTING) {
+        this._updateAttract(dt);
+    }
+    else if (this.state === STATE.PLAYING) {
+        this._updatePlaying(dt);
+        if (this.demoActive) {
+            this._simulatePlay(dt);
+        }
+    }
+    else if (this.state === STATE.GAMEOVER) {
+        this._updateGameover(dt);
+    }
+    else if (this.state === STATE.BOARDCLEAR) {
+        this._updateBoardClear(dt);
+    }
 
     this._draw();
     requestAnimationFrame(ts2 => this._loop(ts2));
-  }
+}
 
   // ── Attract update ───────────────────────────────────────────
   _updateAttract(dt) {
@@ -1215,8 +1215,9 @@ if (a && a.ended && !this.demoActive) {
             for (const fb of g.tmpDropped) g.board[fb.y][fb.x] = g.blnkFrm;
           }
         }
+       this.state = STATE.BOARDCLEAR;
       }
-      if (g.endTime < 0) {
+      if (g.endTime <= 0) {
         g.endTime = 0;
         let bkCount=0, bkFrms=0;
         for (let yi=0;yi<ROWS;yi++) {
@@ -1263,7 +1264,7 @@ if (a && a.ended && !this.demoActive) {
           }
         }
       }
-      if (g.brdClrTm < 0) {
+      if (g.brdClrTm <= 0) {
         g.brdClrTm = 0;
         this.state = STATE.ATTRACT;
         sfx.play("attract", true);
