@@ -213,177 +213,124 @@ const SFX_MAP = {
   
 class SoundManager {
   constructor() {
-    this._ctx = null;
-    this._buffers = {};
-    this._sources = {};
-    this._gains = {};
+    this._cache = {};
     this._positions = {};
     this._unlocked = false;
     this._queue = [];
-    this._decodePromises = {};
-    this._masterGain = null;
-    this._initAttempted = false;
+    this._ready = new Set();
+    this._silent = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==");
   }
 
-  _initCtx() {
-    if (this._ctx) return;
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    this._ctx = new AudioContext();
-    this._masterGain = this._ctx.createGain();
-    this._masterGain.connect(this._ctx.destination);
-    this._masterGain.gain.value = 1.0;
-    this._initAttempted = true;
-  }
-
-  async preloadAll() {
+  preloadAll() {
     if (!SOUND_ENABLED) return;
-    this._initCtx();
-
-    const keys = Object.keys(SFX_MAP);
-    await Promise.all(keys.map(key => this._decode(key)));
+    Object.keys(SFX_MAP).forEach(key => {
+      const a = this._load(key);
+      if (!a) return;
+      
+      const markReady = () => this._ready.add(key);
+      a.addEventListener('canplaythrough', markReady, { once: true });
+      a.addEventListener('loadeddata', markReady, { once: true });
+      a.addEventListener('error', () => {}, { once: true });
+      
+      if (a.readyState >= 3) markReady();
+    });
   }
 
-  async _decode(key) {
-    if (this._buffers[key]) return;
-    if (this._decodePromises[key]) return this._decodePromises[key];
-
-    const path = SFX_PATH + encodeURI(SFX_MAP[key]);
-    this._decodePromises[key] = (async () => {
-      try {
-        const response = await fetch(path);
-        const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await this._ctx.decodeAudioData(arrayBuffer);
-        this._buffers[key] = audioBuffer;
-      } catch (e) {
-        console.warn(`Failed to decode ${key}:`, e);
-      }
-    })();
-
-    return this._decodePromises[key];
+  _load(key) {
+    if (!SOUND_ENABLED) return null;
+    if (!this._cache[key]) {
+      const a = new Audio(SFX_PATH + encodeURI(SFX_MAP[key]));
+      a.preload = "auto";
+      a.load();
+      this._cache[key] = a;
+    }
+    return this._cache[key];
   }
 
-  // CRITICAL FIX: iOS requires resume() inside the user gesture handler
   unlock() {
-    if (this._unlocked) {
-      // Still try to resume in case iOS suspended us again
-      if (this._ctx && this._ctx.state === 'suspended') {
-        this._ctx.resume();
-      }
-      return;
-    }
-
+    if (this._unlocked) return;
     this._unlocked = true;
-    this._initCtx();
-
-    // THIS IS THE KEY LINE for iOS Safari
-    if (this._ctx.state === 'suspended') {
-      this._ctx.resume().then(() => {
-        console.log('AudioContext resumed');
-      }).catch(err => {
-        console.warn('AudioContext resume failed:', err);
-      });
-    }
-
+    
+    // Unlock iOS audio session with silent sound
+    this._silent.play()
+      .then(() => { this._silent.pause(); this._silent.currentTime = 0; })
+      .catch(() => {});
+      
     this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
     this._queue = [];
   }
 
   play(key, loop = false, rate = null) {
     if (!SOUND_ENABLED) return;
-
-    // If AudioContext is suspended (iOS backgrounded us), try to resume
-    if (this._ctx && this._ctx.state === 'suspended') {
-      this._ctx.resume().catch(() => {});
-    }
-
+    
     if (!this._unlocked) {
       this._queue.push({ key, loop, rate });
       return;
     }
 
-    if (!this._buffers[key]) {
-      // Wait for decode, then play
-      this._decode(key).then(() => {
-        if (this._unlocked) this._playNow(key, loop, rate);
-      });
+    const a = this._load(key);
+    if (!a) return;
+
+    // Play immediately if buffered
+    if (a.readyState >= 3 || this._ready.has(key)) {
+      this._playNow(key, loop, rate);
       return;
     }
 
-    this._playNow(key, loop, rate);
+    // Otherwise wait for it, then play
+    const onReady = () => {
+      a.removeEventListener('canplaythrough', onReady);
+      a.removeEventListener('loadeddata', onReady);
+      this._playNow(key, loop, rate);
+    };
+    
+    a.addEventListener('canplaythrough', onReady, { once: true });
+    a.addEventListener('loadeddata', onReady, { once: true });
   }
 
   _playNow(key, loop = false, rate = null) {
-    if (!this._ctx) this._initCtx();
-    if (this._ctx.state === 'suspended') return; // iOS blocked us
-
-    const buffer = this._buffers[key];
-    if (!buffer) return;
-
-    if (this._sources[key]) {
-      try { this._sources[key].stop(); } catch (e) {}
-    }
-
-    const source = this._ctx.createBufferSource();
-    const gain = this._ctx.createGain();
-
-    source.buffer = buffer;
-    source.loop = loop;
-    if (rate) source.playbackRate.value = rate;
-
-    source.connect(gain);
-    gain.connect(this._masterGain);
-
-    this._sources[key] = source;
-    this._gains[key] = gain;
-
-    const startPos = this._positions[key] || 0;
-    source.start(0, startPos);
-    this._positions[key] = 0;
-
-    source.onended = () => {
-      if (this._sources[key] === source) {
-        this._sources[key] = null;
-      }
-    };
+    const a = this._load(key);
+    if (!a) return;
+    
+    a.loop = loop;
+    if (rate) a.playbackRate = rate;
+    a.currentTime = this._positions[key] || 0;
+    
+    a.play().catch(e => {
+      console.warn(`Playback failed for ${key}:`, e);
+    });
   }
 
   stop(key) {
-    if (this._sources[key]) {
-      try { this._sources[key].stop(); } catch (e) {}
-      this._sources[key] = null;
+    const a = this._cache[key];
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+      this._positions[key] = 0;
     }
-    this._positions[key] = 0;
   }
 
   stopAll(preserveKeys = []) {
-    Object.keys(this._sources).forEach(key => {
-      if (!this._sources[key]) return;
+    Object.keys(this._cache).forEach(key => {
+      const a = this._cache[key];
+      if (!a) return;
+      
       if (preserveKeys.includes(key)) {
-        this._positions[key] = this._ctx.currentTime;
-        try { this._sources[key].stop(); } catch (e) {}
+        this._positions[key] = a.currentTime;
+        a.pause();
       } else {
-        try { this._sources[key].stop(); } catch (e) {}
+        a.pause();
+        a.currentTime = 0;
         this._positions[key] = 0;
       }
-      this._sources[key] = null;
     });
   }
 
   resume(key) {
-    if (this._positions[key] > 0) {
-      this._playNow(key, false, null);
-    }
-  }
-
-  setVolume(key, val) {
-    if (this._gains[key]) {
-      this._gains[key].gain.value = Math.max(0, Math.min(1, val));
-    }
-  }
-
-  setMasterVolume(val) {
-    if (this._masterGain) {
-      this._masterGain.gain.value = Math.max(0, Math.min(1, val));
+    const a = this._cache[key];
+    if (a) {
+      a.currentTime = this._positions[key] || 0;
+      a.play().catch(e => console.warn(`Resume failed for ${key}:`, e));
     }
   }
 }
