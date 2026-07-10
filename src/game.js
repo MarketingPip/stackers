@@ -1198,50 +1198,58 @@ if (a && a.ended && !this.demoActive) {
   }
 
   // ── Gameover update ──────────────────────────────────────────
-  _updateGameover(dt) {
+_updateGameover(dt) {
     const g = this;
-    g.hasVoiceLinePlayed = {1:false, 2:false};
+    g.hasVoiceLinePlayed = {1: false, 2: false};
+
     if (g.endTime > 0) {
-      g.endTime -= dt;
-      for (let go=0; go<g.loseTmSt/g.loseInt; go++) {
-        if (go > 5 &&
-            g.endTime < g.loseTmSt - g.loseInt*go &&
-            g.endTime >= g.loseTmSt - g.loseInt*go - dt) {
-          g.blnkFrm = g.blnkFrm===0?1:0;
-          if (g.rowLen > 0 && g.pos.y === 0) {
-            for (let y=0;y<ROWS;y++) for (let x=0;x<COLS;x++)
-              g.board[y][x] = WIN_SEQ[g.blnkFrm][y][x];
-          } else {
-            for (const fb of g.tmpDropped) g.board[fb.y][fb.x] = g.blnkFrm;
-          }
-        }
-       this.state = STATE.BOARDCLEAR;
-      }
-      if (g.endTime <= 0) {
-        g.endTime = 0;
-        let bkCount=0, bkFrms=0;
-        for (let yi=0;yi<ROWS;yi++) {
-          const y=(ROWS-1)-yi;
-          for (let x=0;x<COLS;x++) {
-            if (g.board[y][x]===1) {
-              g.lftOvrBks[bkCount++] = {x, y};
-              bkFrms += ROWS-y;
+        g.endTime -= dt;
+
+        // Blink logic during gameover delay
+        for (let go = 0; go < g.loseTmSt / g.loseInt; go++) {
+            if (go > 5 &&
+                g.endTime < g.loseTmSt - g.loseInt * go &&
+                g.endTime >= g.loseTmSt - g.loseInt * go - dt) {
+                g.blnkFrm = g.blnkFrm === 0 ? 1 : 0;
+                if (g.rowLen > 0 && g.pos.y === 0) {
+                    for (let y = 0; y < ROWS; y++) {
+                        for (let x = 0; x < COLS; x++) {
+                            g.board[y][x] = WIN_SEQ[g.blnkFrm][y][x];
+                        }
+                    }
+                } else {
+                    for (const fb of g.tmpDropped) {
+                        g.board[fb.y][fb.x] = g.blnkFrm;
+                    }
+                }
             }
-          }
         }
-        g.brdClrTmSt = bkFrms * g.brdClrInt;
-        g.brdClrTm   = g.brdClrTmSt;
-        this.state = STATE.BOARDCLEAR;
-      }
-    } else if (g.brdClrTm > 0) {
-      this.state = STATE.BOARDCLEAR;
+
+        // FIX: <= 0 instead of < 0
+        if (g.endTime <= 0) {
+            g.endTime = 0;
+            let bkCount = 0, bkFrms = 0;
+            for (let yi = 0; yi < ROWS; yi++) {
+                const y = (ROWS - 1) - yi;
+                for (let x = 0; x < COLS; x++) {
+                    if (g.board[y][x] === 1) {
+                        g.lftOvrBks[bkCount++] = {x, y};
+                        bkFrms += ROWS - y;
+                    }
+                }
+            }
+            g.brdClrTmSt = bkFrms * g.brdClrInt;
+            g.brdClrTm = g.brdClrTmSt;
+            this.state = STATE.BOARDCLEAR;
+        }
     }
-    
+    // REMOVED: else if (g.brdClrTm > 0) — state machine handles this now
+
     if (this.demoActive && this.state === STATE.BOARDCLEAR && this.brdClrTm <= 0) {
-  this._stopDemo();
+        this._stopDemo();
+    }
 }
-    
-  }
+
 
   // ── Board clear update ───────────────────────────────────────
   _updateBoardClear(dt) {
@@ -1275,26 +1283,25 @@ if (a && a.ended && !this.demoActive) {
   // ═══════════════════════════════════════════════════════════
   //  RENDERING
   // ═══════════════════════════════════════════════════════════
-  _draw() {
-    ctx.clearRect(0,0,CW,CH);
+_draw() {
+    ctx.clearRect(0, 0, CW, CH);
 
     // Background gradient
-    const bg = ctx.createLinearGradient(0,0,0,CH);
-    bg.addColorStop(0,"#000814");
-    bg.addColorStop(1,"#001122");
+    const bg = ctx.createLinearGradient(0, 0, 0, CH);
+    bg.addColorStop(0, "#000814");
+    bg.addColorStop(1, "#001122");
     ctx.fillStyle = bg;
-    ctx.fillRect(0,0,CW,CH);
+    ctx.fillRect(0, 0, CW, CH);
 
     if (this.state === STATE.ATTRACT || this.state === STATE.STARTING) {
-      this._drawAttract();
+        this._drawAttract();
     } else {
-     
-      this._drawHeader();
-      this._drawBoard();
-      this._drawPrizeLines();
-      if (this.state === STATE.GAMEOVER || this.state === STATE.BOARDCLEAR) {
-        this._drawGameoverOverlay();
-      }
+        this._drawHeader();
+        this._drawBoard();
+        this._drawPrizeLines();
+        if (this.state === STATE.GAMEOVER || this.state === STATE.BOARDCLEAR) {
+            this._drawGameoverOverlay();
+        }
     }
 
     this._drawParticles();
@@ -1302,11 +1309,8 @@ if (a && a.ended && !this.demoActive) {
     this._drawScanlines();
     this._drawCRT();
 
-    // Board clear runs even in gameover state
-    if (this.state === STATE.BOARDCLEAR)
-       
-      this._updateBoardClear(16);
-  }
+    // REMOVED: this._updateBoardClear(16) — now handled in _loop state machine
+}
 
   // ── Attract screen ───────────────────────────────────────────
   _drawAttract() {
