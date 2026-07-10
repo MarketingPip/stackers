@@ -213,7 +213,8 @@ const SFX_MAP = {
   
 class SoundManager {
   constructor() {
-    this._cache = {};
+    this._cache = {};        // Audio elements
+    this._fetching = {};     // Promise for in-flight loads
     this._positions = {};
     this._unlocked = false;
     this._queue = [];
@@ -224,45 +225,46 @@ class SoundManager {
   preloadAll() {
     if (!SOUND_ENABLED) return;
     Object.keys(SFX_MAP).forEach(key => {
-      const a = this._load(key);
-      if (!a) return;
-      
-      const markReady = () => this._ready.add(key);
-      a.addEventListener('canplaythrough', markReady, { once: true });
-      a.addEventListener('loadeddata', markReady, { once: true });
-      a.addEventListener('error', () => {}, { once: true });
-      
-      if (a.readyState >= 3) markReady();
+      this._load(key);
     });
   }
 
   _load(key) {
     if (!SOUND_ENABLED) return null;
-    if (!this._cache[key]) {
-      const a = new Audio(SFX_PATH + encodeURI(SFX_MAP[key]));
-      a.preload = "auto";
-      a.load();
-      this._cache[key] = a;
-    }
-    return this._cache[key];
+    if (this._cache[key]) return this._cache[key];
+
+    // Create once, never recreate
+    const a = new Audio(SFX_PATH + encodeURI(SFX_MAP[key]));
+    a.preload = "auto";
+
+    // Mark ready when buffered enough to play
+    const markReady = () => this._ready.add(key);
+    a.addEventListener('canplaythrough', markReady, { once: true });
+    a.addEventListener('loadeddata', markReady, { once: true });
+    a.addEventListener('error', () => {}, { once: true });
+
+    // Start loading
+    a.load();
+
+    this._cache[key] = a;
+    return a;
   }
 
   unlock() {
     if (this._unlocked) return;
     this._unlocked = true;
-    
-    // Unlock iOS audio session with silent sound
+
     this._silent.play()
       .then(() => { this._silent.pause(); this._silent.currentTime = 0; })
       .catch(() => {});
-      
+
     this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
     this._queue = [];
   }
 
   play(key, loop = false, rate = null) {
     if (!SOUND_ENABLED) return;
-    
+
     if (!this._unlocked) {
       this._queue.push({ key, loop, rate });
       return;
@@ -271,31 +273,27 @@ class SoundManager {
     const a = this._load(key);
     if (!a) return;
 
-    // Play immediately if buffered
+    // Already buffered enough to play
     if (a.readyState >= 3 || this._ready.has(key)) {
       this._playNow(key, loop, rate);
       return;
     }
 
-    // Otherwise wait for it, then play
+    // Wait for canplaythrough, then play once
     const onReady = () => {
-      a.removeEventListener('canplaythrough', onReady);
-      a.removeEventListener('loadeddata', onReady);
       this._playNow(key, loop, rate);
     };
-    
     a.addEventListener('canplaythrough', onReady, { once: true });
-    a.addEventListener('loadeddata', onReady, { once: true });
   }
 
   _playNow(key, loop = false, rate = null) {
-    const a = this._load(key);
+    const a = this._cache[key];
     if (!a) return;
-    
+
     a.loop = loop;
     if (rate) a.playbackRate = rate;
     a.currentTime = this._positions[key] || 0;
-    
+
     a.play().catch(e => {
       console.warn(`Playback failed for ${key}:`, e);
     });
@@ -314,7 +312,7 @@ class SoundManager {
     Object.keys(this._cache).forEach(key => {
       const a = this._cache[key];
       if (!a) return;
-      
+
       if (preserveKeys.includes(key)) {
         this._positions[key] = a.currentTime;
         a.pause();
