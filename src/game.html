@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>STACKER</title>
 <style>
   
@@ -27,7 +27,11 @@ body {
     display:block;
     image-rendering:pixelated;
     cursor:pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
+  
   /* Side panel */
   #side {
     width:140px;
