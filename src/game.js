@@ -214,34 +214,38 @@ const SFX_MAP = {
 class SoundManager {
   constructor() {
     this._cache = {};        // Audio elements
+    this._fetching = {};     // Promise for in-flight loads
     this._positions = {};
     this._unlocked = false;
     this._queue = [];
     this._ready = new Set();
-    this._warmed = new Set();
-    this._playing = new Set(); // Track currently playing sounds
     this._silent = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==");
   }
 
   preloadAll() {
     if (!SOUND_ENABLED) return;
-    Object.keys(SFX_MAP).forEach(key => this._load(key));
+    Object.keys(SFX_MAP).forEach(key => {
+      this._load(key);
+    });
   }
 
   _load(key) {
     if (!SOUND_ENABLED) return null;
     if (this._cache[key]) return this._cache[key];
 
+    // Create once, never recreate
     const a = new Audio(SFX_PATH + encodeURI(SFX_MAP[key]));
     a.preload = "auto";
 
+    // Mark ready when buffered enough to play
     const markReady = () => this._ready.add(key);
     a.addEventListener('canplaythrough', markReady, { once: true });
     a.addEventListener('loadeddata', markReady, { once: true });
     a.addEventListener('error', () => {}, { once: true });
-    a.addEventListener('ended', () => this._playing.delete(key));
 
+    // Start loading
     a.load();
+
     this._cache[key] = a;
     return a;
   }
@@ -251,38 +255,11 @@ class SoundManager {
     this._unlocked = true;
 
     this._silent.play()
-      .then(() => {
-        this._silent.pause();
-        this._silent.currentTime = 0;
-        // Pre-warm voice lines that must be instant
-        this._warmSounds(['attract', 'vo_woohoo', 'vo_careful', 'vo_headingUp', 'vo_lastBlock', 'place', 'miss']);
-      })
+      .then(() => { this._silent.pause(); this._silent.currentTime = 0; })
       .catch(() => {});
 
     this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
     this._queue = [];
-  }
-
-  _warmSounds(keys) {
-    keys.forEach(key => {
-      if (this._warmed.has(key)) return;
-      const a = this._cache[key];
-      if (!a) return;
-
-      // iOS: must actually play to decode, but we can do it silently
-      const oldVol = a.volume;
-      a.volume = 0.001; // near-silent, iOS still decodes
-      a.play().then(() => {
-        // Immediately pause and reset
-        a.pause();
-        a.currentTime = 0;
-        a.volume = oldVol;
-        this._warmed.add(key);
-        this._ready.add(key);
-      }).catch(() => {
-        a.volume = oldVol;
-      });
-    });
   }
 
   play(key, loop = false, rate = null) {
@@ -296,44 +273,28 @@ class SoundManager {
     const a = this._load(key);
     if (!a) return;
 
-    // If already warmed/ready, play immediately
-    if (this._warmed.has(key) || a.readyState >= 3 || this._ready.has(key)) {
+    // Already buffered enough to play
+    if (a.readyState >= 3 || this._ready.has(key)) {
       this._playNow(key, loop, rate);
       return;
     }
 
-    // Not ready yet — wait, but with a timeout so we don't block forever
-    let played = false;
+    // Wait for canplaythrough, then play once
     const onReady = () => {
-      if (played) return;
-      played = true;
       this._playNow(key, loop, rate);
     };
-
     a.addEventListener('canplaythrough', onReady, { once: true });
-    
-    // Fallback: play anyway after 100ms even if not "ready"
-    // iOS sometimes fires canplaythrough late or never for short files
-    setTimeout(onReady, 100);
   }
 
   _playNow(key, loop = false, rate = null) {
     const a = this._cache[key];
     if (!a) return;
 
-    // Stop if already playing (prevents overlapping on same element)
-    if (this._playing.has(key)) {
-      a.pause();
-      a.currentTime = 0;
-    }
-
     a.loop = loop;
     if (rate) a.playbackRate = rate;
     a.currentTime = this._positions[key] || 0;
 
-    this._playing.add(key);
     a.play().catch(e => {
-      this._playing.delete(key);
       console.warn(`Playback failed for ${key}:`, e);
     });
   }
@@ -344,7 +305,6 @@ class SoundManager {
       a.pause();
       a.currentTime = 0;
       this._positions[key] = 0;
-      this._playing.delete(key);
     }
   }
 
@@ -361,7 +321,6 @@ class SoundManager {
         a.currentTime = 0;
         this._positions[key] = 0;
       }
-      this._playing.delete(key);
     });
   }
 
