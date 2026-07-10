@@ -272,22 +272,22 @@ game.start();
                 <div class="border border-white/10 p-8 rounded-2xl flex flex-col h-full bg-white/5 hover:bg-white/10 transition-all">
                     <div class="mb-4 text-slate-400"><i data-lucide="monitor" class="w-10 h-10"></i></div>
                     <h3 class="text-xl font-bold mb-2">Windows</h3>
-                    <p class="text-sm text-slate-400 mb-6 font-mono">{{ windows_zip.name }} ({{ asset.size | divided_by: 1048576 | round: 2 }} MB)</p>
-                    <a class="w-full bg-primary py-3 rounded-xl font-bold hover:bg-purple-600 mt-auto shadow-lg shadow-primary/20" href="{{ windows_zip.browser_download_url }}">Download .exe</button>
+                    <p class="text-sm text-slate-400 mb-6 font-mono">{{ windows_zip.name }} ({{ windows_zip.size | divided_by: 1048576 | round: 2 }} MB)</p>
+                    <a href="{{ windows_zip.browser_download_url }}" class="w-full block text-center bg-primary py-3 rounded-xl font-bold hover:bg-purple-600 mt-auto shadow-lg shadow-primary/20">Download .exe</a>
                 </div>
 
                 <div class="border border-white/10 p-8 rounded-2xl flex flex-col h-full bg-white/5 hover:bg-white/10 transition-all">
                     <div class="mb-4 text-slate-400"><i data-lucide="terminal" class="w-10 h-10"></i></div>
                     <h3 class="text-xl font-bold mb-2">Linux</h3>
-                    <p class="text-sm text-slate-400 mb-6 font-mono">{{ linux_zip.name }} ({{ asset.size | divided_by: 1048576 | round: 2 }} MB)</p>
-                    <a class="w-full border border-white/20 py-3 rounded-xl font-bold hover:bg-white/10 mt-auto"  href="{{ linux_zip.browser_download_url }}">>Download AppImage</button>
+                    <p class="text-sm text-slate-400 mb-6 font-mono">{{ linux_archive.name }} ({{ linux_archive.size | divided_by: 1048576 | round: 2 }} MB)</p>
+                    <a href="{{ linux_archive.browser_download_url }}" class="w-full block text-center border border-white/20 py-3 rounded-xl font-bold hover:bg-white/10 mt-auto">Download AppImage</a>
                 </div>
 
                 <div class="border border-white/10 p-8 rounded-2xl flex flex-col h-full bg-white/5 hover:bg-white/10 transition-all">
                     <div class="mb-4 text-slate-400"><i data-lucide="apple" class="w-10 h-10"></i></div>
                     <h3 class="text-xl font-bold mb-2">macOS</h3>
                     <p class="text-sm text-slate-400 mb-6 font-mono">openstacker_mac_universal.dmg</p>
-                    <button class="w-full border border-white/20 py-3 rounded-xl font-bold hover:bg-white/10 mt-auto">Download DMG</button>
+                    <a href="https://example.com/download.dmg" class="w-full block text-center border border-white/20 py-3 rounded-xl font-bold hover:bg-white/10 mt-auto">Download DMG</a>
                 </div>
             </div>
         </div>
