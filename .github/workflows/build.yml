@@ -97,6 +97,7 @@ jobs:
             dist/*.AppImage
             dist/*.deb
             dist/*.zip
+            dist/**/*.zip
           draft: false
           prerelease: false
         env:
