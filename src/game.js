@@ -1804,10 +1804,10 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
 // ── Boot ──────────────────────────────────────────────────────
   
 class ArcadeBooter  {
-  constructor(canvas, context, tap_button, onComplete) {
+  constructor(canvas, context, action_buttons, onComplete) {
     this.cv = canvas;
     this.ctx = context;
-    this.tap_button = tap_button;
+    this.action_buttons = action_buttons;
     this.onComplete = onComplete;
     this.startTime = Date.now();
 
@@ -1831,7 +1831,7 @@ class ArcadeBooter  {
     if(isElectron === false){
     this.cv.addEventListener("mousedown", this.handleInput);
     this.cv.addEventListener("touchstart", this.handleInput);
-    this.tap_button.addEventListener("keydown", this.handleInput); 
+    document.addEventListener("keydown", this.handleInput); 
     
     };
     this.render();
@@ -1839,12 +1839,12 @@ class ArcadeBooter  {
 
   handleInput(e) {
     if (this.waitingForTap && !this.onCompleteCalled || isElectron === true && !this.onCompleteCalled) {
-       if (!this.tap_button.includes(e.code)) {
-         return;
+       if (e.type === "keydown" && !this.action_buttons.main_button.includes(e.code)) {
+         return; 
        }
  
       this.onCompleteCalled = true;
-      this.tap_button.removeEventListener("keydown", this.handleInput);
+      document.removeEventListener("keydown", this.handleInput);
       this.cv.removeEventListener("mousedown", this.handleInput);
       this.cv.removeEventListener("touchstart", this.handleInput);
       this.onComplete();
@@ -1927,15 +1927,14 @@ class ArcadeBooter  {
   }
 }
  
- new ArcadeBooter(cv, ctx, ACTION_KEYS.main_button, f() => {
-  // This callback runs ONLY after the 6-second animation finishes
-  
+new ArcadeBooter(cv, ctx, ACTION_KEYS, () => {
+    // This callback runs ONLY after the 6-second animation finishes
+
     setTimeout(() => {
         const game = new Stacker(SETTINGS.credits_required);
         sfx.play("attract", true);
-    }, 50);   // wait to attach input to kick off attract mode
-   
- }) 
+    }, 50); // wait to attach input to kick off attract mode
+}); 
   
 // ── External API for Arduino / hardware integration ───────────
 window.STACKER = {
