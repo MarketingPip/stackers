@@ -8,8 +8,9 @@ var defaultSettings = {
   sfx_path: "https://lambda.vgmtreasurechest.com/soundtracks/stacker-arcade-gamerip-2004",
   electron_menu_bar: true,
   // set to false for debugging.,
-  credits_required: 0
+  credits_required: 0,
   // if credits_required is less than 0 - freeplay enabled.. 
+  theme: "cyberpunk"
 };
 var THEMES = {
   cyberpunk: {
@@ -98,6 +99,19 @@ var THEMES = {
     // Electric Blue Stacker
   }
 };
+var IS_MOBILE = navigator.maxTouchPoints > 0;
+var PERF = {
+  shadowBlur: IS_MOBILE ? 6 : 12,
+  // halve blur radius
+  maxParticles: IS_MOBILE ? 30 : 60,
+  // halve burst count
+  particleLifeDecay: IS_MOBILE ? 0.04 : 0.02,
+  // particles die faster
+  scanlineAlpha: IS_MOBILE ? 0.02 : 0.04,
+  // fainter scanlines
+  crtVignette: !IS_MOBILE
+  // skip CRT on mobile
+};
 window.addEventListener("DOMContentLoaded", async () => {
   let isElectron = false;
   if (navigator.userAgent.toLowerCase().includes(" electron/") || typeof process !== "undefined" && process.versions && process.versions.electron) {
@@ -106,12 +120,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   ;
   const DEFAULT_SETTINGS = defaultSettings;
   const SETTINGS = isElectron ? await window.electron.call("read-from-file", "settings.json") : DEFAULT_SETTINGS;
-  let THEME = SETTINGS?.theme || "cyberpunk";
+  SETTINGS.theme = SETTINGS?.theme ?? DEFAULT_SETTINGS.theme;
   const theme_query = new URLSearchParams(location.search).get("theme");
-  if (Object.hasOwn(THEMES, theme)) {
-    THEME = theme;
+  if (theme_query && Object.hasOwn(THEMES, theme_query)) {
+    SETTINGS.theme = theme_query;
   }
   ;
+  const ACTION_KEYS = { main_button: ["NumpadEnter", "Enter"], continue_btn: ["Space"], coin_insert: ["KeyC"] };
   const SOUND_ENABLED = SETTINGS.sound_enabled;
   const SFX_PATH = SETTINGS.sfx_path;
   const SFX_MAP = {
@@ -158,14 +173,16 @@ window.addEventListener("DOMContentLoaded", async () => {
   class SoundManager {
     constructor() {
       this._cache = {};
-      this._current = null;
+      this._fetching = {};
       this._positions = {};
+      this._unlocked = false;
+      this._queue = [];
+      this._ready = /* @__PURE__ */ new Set();
+      this._silent = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==");
     }
     preloadAll() {
-      console.log(SOUND_ENABLED);
       if (!SOUND_ENABLED)
         return;
-      console.log("Preloading all sound effects...");
       Object.keys(SFX_MAP).forEach((key) => {
         this._load(key);
       });
@@ -173,27 +190,61 @@ window.addEventListener("DOMContentLoaded", async () => {
     _load(key) {
       if (!SOUND_ENABLED)
         return null;
-      if (!this._cache[key]) {
-        const path = SFX_PATH + encodeURI(SFX_MAP[key]);
-        const a = new Audio(path);
-        a.preload = "auto";
-        a.load();
-        this._cache[key] = a;
-      }
-      return this._cache[key];
+      if (this._cache[key])
+        return this._cache[key];
+      const a = new Audio(SFX_PATH + encodeURI(SFX_MAP[key]));
+      a.preload = "auto";
+      const markReady = () => this._ready.add(key);
+      a.addEventListener("canplaythrough", markReady, { once: true });
+      a.addEventListener("loadeddata", markReady, { once: true });
+      a.addEventListener("error", () => {
+      }, { once: true });
+      a.load();
+      this._cache[key] = a;
+      return a;
+    }
+    unlock() {
+      if (this._unlocked)
+        return;
+      this._unlocked = true;
+      this._silent.play().then(() => {
+        this._silent.pause();
+        this._silent.currentTime = 0;
+      }).catch(() => {
+      });
+      this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
+      this._queue = [];
     }
     play(key, loop = false, rate = null) {
       if (!SOUND_ENABLED)
         return;
+      if (!this._unlocked) {
+        this._queue.push({ key, loop, rate });
+        return;
+      }
       const a = this._load(key);
       if (!a)
         return;
-      a.loop = loop;
-      if (rate) {
-        a.playbackRate = rate;
+      if (a.readyState >= 3 || this._ready.has(key)) {
+        this._playNow(key, loop, rate);
+        return;
       }
+      const onReady = () => {
+        this._playNow(key, loop, rate);
+      };
+      a.addEventListener("canplaythrough", onReady, { once: true });
+    }
+    _playNow(key, loop = false, rate = null) {
+      const a = this._cache[key];
+      if (!a)
+        return;
+      a.loop = loop;
+      if (rate)
+        a.playbackRate = rate;
       a.currentTime = this._positions[key] || 0;
-      a.play().catch((e) => console.warn(`Playback failed for ${key}:`, e));
+      a.play().catch((e) => {
+        console.warn(`Playback failed for ${key}:`, e);
+      });
     }
     stop(key) {
       const a = this._cache[key];
@@ -203,7 +254,6 @@ window.addEventListener("DOMContentLoaded", async () => {
         this._positions[key] = 0;
       }
     }
-    // ✅ Updated stopAll with preserve list
     stopAll(preserveKeys = []) {
       Object.keys(this._cache).forEach((key) => {
         const a = this._cache[key];
@@ -311,6 +361,15 @@ window.addEventListener("DOMContentLoaded", async () => {
   let BOARD_TOP = 80;
   const sfx = new SoundManager();
   sfx.preloadAll();
+  const unlockAudio = (e) => {
+    sfx.unlock();
+    cv.removeEventListener("mousedown", unlockAudio, { capture: true });
+    cv.removeEventListener("touchstart", unlockAudio, { capture: true });
+    document.removeEventListener("keydown", unlockAudio, { capture: true });
+  };
+  cv.addEventListener("mousedown", unlockAudio, { capture: true, once: true });
+  cv.addEventListener("touchstart", unlockAudio, { capture: true, once: true });
+  document.addEventListener("keydown", unlockAudio, { capture: true, once: true });
   const PRIZES = [
     { label: "MAJOR PRIZE", color: "#4af", row: 0 },
     { label: "MINOR PRIZE", color: "#ff4", row: 4 }
@@ -571,7 +630,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       this.vx = (Math.random() - 0.5) * 6;
       this.vy = (Math.random() - 0.7) * 8;
       this.life = 1;
-      this.decay = 0.02 + Math.random() * 0.03;
+      this.decay = PERF.particleLifeDecay + Math.random() * (PERF.particleLifeDecay * 0.75);
       this.size = 3 + Math.random() * 4;
     }
     update() {
@@ -625,7 +684,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       this.pauseActions = false;
       this.board = [];
       this.pos = { x: 0, y: ROWS - 1 };
-      this.currentTheme = "cyberpunk";
+      this.currentTheme = SETTINGS.theme;
       this.dir = "r";
       this.rowLen = 3;
       this.moveInterval = 100;
@@ -692,11 +751,13 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
     // ── Input ────────────────────────────────────────────────────
     _bindInput() {
+      this._lastTap = 0;
       cv.addEventListener("click", async (e) => {
+        if (navigator.maxTouchPoints > 0)
+          return;
         await this._action(e);
       });
       document.addEventListener("keydown", async (e) => {
-        const ACTION_KEYS = { main_button: ["NumpadEnter", "Enter"], continue_btn: ["Space"], coin_insert: ["KeyC"] };
         if (ACTION_KEYS.main_button.includes(e.code)) {
           e.preventDefault();
           await this._action();
@@ -709,14 +770,15 @@ window.addEventListener("DOMContentLoaded", async () => {
           this.insertCoin();
         }
       });
-      cv.addEventListener(
-        "touchstart",
-        (e) => {
-          e.preventDefault();
-          this._action(e);
-        },
-        { passive: false }
-      );
+      cv.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const now = Date.now();
+        if (now - this._lastTap < 350)
+          return;
+        this._lastTap = now;
+        this._action(e);
+      }, { passive: false });
     }
     async _action(e) {
       if (this.demoActive) {
@@ -831,7 +893,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         fireEvent("miss", { count: missed, row: g.pos.y });
         this._flash("MISS \xD7" + missed);
         g.tmpDropped.forEach((d) => {
-          for (let p = 0; p < 8; p++)
+          for (let p = 0; p < (IS_MOBILE ? 4 : 8); p++)
             this.particles.push(new Particle(
               PAD + d.x * CELL + CELL / 2,
               BOARD_TOP + PAD + d.y * CELL + CELL / 2,
@@ -841,7 +903,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       } else {
         sfx.play("place");
         this.score += g.pos.y === PRIZES[0].row ? 500 : g.pos.y === PRIZES[1].row ? 200 : 10 * (ROWS - g.pos.y);
-        for (let p = 0; p < 6; p++)
+        for (let p = 0; p < (IS_MOBILE ? 3 : 6); p++)
           this.particles.push(new Particle(
             PAD + (g.pos.x + Math.random() * g.rowLen) * CELL,
             BOARD_TOP + PAD + g.pos.y * CELL,
@@ -885,12 +947,13 @@ window.addEventListener("DOMContentLoaded", async () => {
           sfx.play("vo_wow");
           fireEvent("major", { board: g.board, score: this.score });
           this._flash("\u2605 MAJOR PRIZE! \u2605");
-          for (let p = 0; p < 60; p++)
+          for (let p = 0; p < PERF.maxParticles; p++) {
             this.particles.push(new Particle(
               CW / 2,
               BOARD_TOP + 40,
               ["#4af", "#ff4", "#f4f", "#4f4", "#fa4"][p % 5]
             ));
+          }
           g.loseTmSt = 5e3;
         }
         g.endTime = g.loseTmSt;
@@ -996,6 +1059,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
       } else if (this.state === STATE.GAMEOVER) {
         this._updateGameover(dt);
+      } else if (this.state === STATE.BOARDCLEAR) {
+        this._updateBoardClear(dt);
       }
       this._draw();
       requestAnimationFrame((ts2) => this._loop(ts2));
@@ -1147,7 +1212,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
           }
         }
-        if (g.placeTime < 0) {
+        if (g.placeTime <= 0) {
           g.placeTime = 0;
           g.pos.y--;
           g.moveInterval = Math.max(1, g.moveInterval - g.mvTmDec);
@@ -1164,16 +1229,19 @@ window.addEventListener("DOMContentLoaded", async () => {
           if (go > 5 && g.endTime < g.loseTmSt - g.loseInt * go && g.endTime >= g.loseTmSt - g.loseInt * go - dt) {
             g.blnkFrm = g.blnkFrm === 0 ? 1 : 0;
             if (g.rowLen > 0 && g.pos.y === 0) {
-              for (let y = 0; y < ROWS; y++)
-                for (let x = 0; x < COLS; x++)
+              for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
                   g.board[y][x] = WIN_SEQ[g.blnkFrm][y][x];
+                }
+              }
             } else {
-              for (const fb of g.tmpDropped)
+              for (const fb of g.tmpDropped) {
                 g.board[fb.y][fb.x] = g.blnkFrm;
+              }
             }
           }
         }
-        if (g.endTime < 0) {
+        if (g.endTime <= 0) {
           g.endTime = 0;
           let bkCount = 0, bkFrms = 0;
           for (let yi = 0; yi < ROWS; yi++) {
@@ -1189,8 +1257,6 @@ window.addEventListener("DOMContentLoaded", async () => {
           g.brdClrTm = g.brdClrTmSt;
           this.state = STATE.BOARDCLEAR;
         }
-      } else if (g.brdClrTm > 0) {
-        this.state = STATE.BOARDCLEAR;
       }
       if (this.demoActive && this.state === STATE.BOARDCLEAR && this.brdClrTm <= 0) {
         this._stopDemo();
@@ -1217,7 +1283,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
           }
         }
-        if (g.brdClrTm < 0) {
+        if (g.brdClrTm <= 0) {
           g.brdClrTm = 0;
           this.state = STATE.ATTRACT;
           sfx.play("attract", true);
@@ -1248,20 +1314,18 @@ window.addEventListener("DOMContentLoaded", async () => {
       this._drawFlash();
       this._drawScanlines();
       this._drawCRT();
-      if (this.state === STATE.BOARDCLEAR)
-        this._updateBoardClear(16);
     }
     // ── Attract screen ───────────────────────────────────────────
     _drawAttract() {
       const g = this;
       const t = this.attractTm;
-      const theme2 = THEMES[this.currentTheme] ?? THEMES["classic_red"] ?? {};
-      const h = theme2.header ?? {};
-      ctx.fillStyle = theme2.bg ?? "#000814";
+      const theme = THEMES[this.currentTheme] ?? THEMES["classic_red"] ?? {};
+      const h = theme.header ?? {};
+      ctx.fillStyle = theme.bg ?? "#000814";
       ctx.fillRect(0, 0, CW, BOARD_TOP);
       const themePrimary = h.title ?? null;
       const themeSecondary = h.highScore ?? null;
-      const themeGrid = theme2.grid ?? null;
+      const themeGrid = theme.grid ?? null;
       const themeLabel = h.label ?? null;
       const primary = themePrimary ?? "#4af";
       const secondary = themeSecondary ?? "#ff4";
@@ -1342,7 +1406,7 @@ window.addEventListener("DOMContentLoaded", async () => {
               ctx.save();
               ctx.globalAlpha = alpha * 0.55;
               ctx.shadowColor = primary;
-              ctx.shadowBlur = 14;
+              ctx.shadowBlur = PERF.shadowBlur;
               ctx.fillStyle = primary;
               ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
               ctx.restore();
@@ -1439,8 +1503,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         this.log = true;
         console.log(THEMES[this.currentTheme], this.currentTheme);
       }
-      const theme2 = THEMES[this.currentTheme] || THEMES["cyberpunk"];
-      const h = theme2.header ?? {};
+      const theme = THEMES[this.currentTheme] || THEMES["cyberpunk"];
+      const h = theme.header ?? {};
       ctx.textAlign = "left";
       ctx.font = "bold 11px 'Courier New'";
       ctx.fillStyle = h.label ?? "#4af8";
@@ -1453,7 +1517,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const titleColor = h.title ?? "#4af";
       ctx.fillStyle = titleColor;
       ctx.shadowColor = titleColor;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = PERF.shadowBlur;
       ctx.fillText("STACKER", CW / 2, 34);
       ctx.shadowBlur = 0;
       ctx.textAlign = "right";
@@ -1463,7 +1527,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       ctx.fillStyle = h.highScore ?? "#ff4";
       ctx.font = "bold 20px 'Courier New'";
       ctx.fillText(String(this.highScore).padStart(6, "0"), CW - 8, 38);
-      ctx.fillStyle = theme2.grid ?? "#4af3";
+      ctx.fillStyle = theme.grid ?? "#4af3";
       ctx.fillRect(0, 42, CW, 1);
       ctx.textAlign = "center";
       ctx.font = "10px 'Courier New'";
@@ -1478,7 +1542,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     // ── Board ─────────────────────────────────────────────────────
     _drawBoard() {
       const g = this;
-      const theme2 = THEMES[this.currentTheme] || THEMES["cyberpunk"];
+      const theme = THEMES[this.currentTheme] || THEMES["cyberpunk"];
       for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
           const px = PAD + x * CELL;
@@ -1486,10 +1550,10 @@ window.addEventListener("DOMContentLoaded", async () => {
           const on = g.board[y][x] === 1;
           let style;
           if (y === PRIZES[0].row)
-            style = theme2.prizes?.[0];
+            style = theme.prizes?.[0];
           else if (y === PRIZES[1].row)
-            style = theme2.prizes?.[1];
-          style = style ?? theme2.default ?? {};
+            style = theme.prizes?.[1];
+          style = style ?? theme.default ?? {};
           if (on) {
             const cx2 = px + CELL / 2, cy2 = py + CELL / 2;
             const grd = ctx.createRadialGradient(cx2, cy2, 2, cx2, cy2, CELL * 0.7);
@@ -1498,7 +1562,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             grd.addColorStop(1, style.stop1 ?? "#048");
             ctx.fillStyle = grd;
             ctx.shadowColor = style.shadow ?? "#4af";
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = PERF.shadowBlur;
           } else {
             ctx.fillStyle = style.empty ?? "#011";
             ctx.shadowBlur = 0;
@@ -1506,7 +1570,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           ctx.fillRect(px + 1, py + 1, CELL - 3, CELL - 3);
           ctx.shadowBlur = 0;
           if (!on) {
-            ctx.strokeStyle = theme2.grid ?? "#4af1";
+            ctx.strokeStyle = theme.grid ?? "#4af1";
             ctx.lineWidth = 0.5;
             ctx.strokeRect(px + 1, py + 1, CELL - 3, CELL - 3);
           }
@@ -1514,14 +1578,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
       ctx.font = "8px 'Courier New'";
       ctx.textAlign = "right";
-      ctx.fillStyle = theme2.text ?? "#4af4";
+      ctx.fillStyle = theme.text ?? "#4af4";
       for (let y = 0; y < ROWS; y++) {
         ctx.fillText(y, PAD - 1, BOARD_TOP + PAD + y * CELL + CELL / 2 + 3);
       }
       ctx.textAlign = "left";
     }
-    toggleTheme(theme2) {
-      this.currentTheme = theme2;
+    toggleTheme(theme) {
+      this.currentTheme = theme;
       this._drawBoard();
     }
     // ── Prize lines ───────────────────────────────────────────────
@@ -1576,7 +1640,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       ctx.font = "bold 16px 'Courier New'";
       ctx.fillStyle = "#fff";
       ctx.shadowColor = "#4af";
-      ctx.shadowBlur = 16;
+      ctx.shadowBlur = PERF.shadowBlur;
       ctx.fillText(this.flashMsg, CW / 2, BOARD_TOP + 30);
       ctx.shadowBlur = 0;
       ctx.restore();
@@ -1584,7 +1648,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     // ── Scanlines ─────────────────────────────────────────────────
     _drawScanlines() {
       ctx.save();
-      ctx.globalAlpha = 0.04;
+      ctx.globalAlpha = PERF.scanlineAlpha;
       ctx.fillStyle = "#000";
       for (let y = 0; y < CH; y += 2)
         ctx.fillRect(0, y, CW, 1);
@@ -1592,6 +1656,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
     // ── CRT vignette ──────────────────────────────────────────────
     _drawCRT() {
+      if (!PERF.crtVignette)
+        return;
       const vg = ctx.createRadialGradient(CW / 2, CH / 2, CH * 0.3, CW / 2, CH / 2, CH * 0.9);
       vg.addColorStop(0, "rgba(0,0,0,0)");
       vg.addColorStop(1, "rgba(0,0,0,0.55)");
@@ -1600,11 +1666,13 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   }
   class ArcadeBooter {
-    constructor(canvas, context, onComplete) {
+    constructor(canvas, context, action_buttons, onComplete) {
       this.cv = canvas;
       this.ctx = context;
+      this.action_buttons = action_buttons;
       this.onComplete = onComplete;
       this.startTime = Date.now();
+      this._rafId = null;
       this.DPR = Math.min(window.devicePixelRatio || 1, 2);
       this.cv.width = Math.round(this.cv.clientWidth * this.DPR);
       this.cv.height = Math.round(this.cv.clientHeight * this.DPR);
@@ -1622,13 +1690,19 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (isElectron === false) {
         this.cv.addEventListener("mousedown", this.handleInput);
         this.cv.addEventListener("touchstart", this.handleInput);
+        document.addEventListener("keydown", this.handleInput);
       }
-      ;
-      this.render();
+      this._rafId = requestAnimationFrame(() => this.render());
     }
-    handleInput() {
+    handleInput(e) {
       if (this.waitingForTap && !this.onCompleteCalled || isElectron === true && !this.onCompleteCalled) {
+        if (e && e.type === "keydown" && !this.action_buttons.main_button.includes(e.code)) {
+          return;
+        }
         this.onCompleteCalled = true;
+        if (this._rafId)
+          cancelAnimationFrame(this._rafId);
+        document.removeEventListener("keydown", this.handleInput);
         this.cv.removeEventListener("mousedown", this.handleInput);
         this.cv.removeEventListener("touchstart", this.handleInput);
         this.onComplete();
@@ -1685,12 +1759,16 @@ window.addEventListener("DOMContentLoaded", async () => {
           this.handleInput();
         }
       }
-      requestAnimationFrame(() => this.render());
+      this._rafId = requestAnimationFrame(() => this.render());
     }
   }
-  new ArcadeBooter(cv, ctx, () => {
-    const game2 = new Stacker(SETTINGS.credits_required);
-    sfx.play("attract", true);
+  new ArcadeBooter(cv, ctx, ACTION_KEYS, () => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const game2 = new Stacker(SETTINGS.credits_required);
+        sfx.play("attract", true);
+      }, 50);
+    });
   });
   window.STACKER = {
     insertCoin: () => game.insertCoin(),
