@@ -1893,8 +1893,10 @@ class ArcadeBooter  {
  new ArcadeBooter(cv, ctx, () => {
   // This callback runs ONLY after the 6-second animation finishes
   
-  const game = new Stacker(SETTINGS.credits_required);
-  sfx.play("attract", true);
+    setTimeout(() => {
+        const game = new Stacker(SETTINGS.credits_required);
+        sfx.play("attract", true);
+    }, 50);   // wait to attach input to kick off attract mode
    
  }) 
   
