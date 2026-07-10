@@ -1857,20 +1857,20 @@ ctx.fillStyle = theme.bg ?? "#000814"; // Use the theme's bg color
  
 // ── Boot ──────────────────────────────────────────────────────
   
-class ArcadeBooter  {
+class ArcadeBooter {
   constructor(canvas, context, action_buttons, onComplete) {
     this.cv = canvas;
     this.ctx = context;
     this.action_buttons = action_buttons;
     this.onComplete = onComplete;
     this.startTime = Date.now();
+    this._rafId = null;
 
-    // Device Pixel Ratio (clamped to 2 for stability)
     this.DPR = Math.min(window.devicePixelRatio || 1, 2);
     this.cv.width = Math.round(this.cv.clientWidth * this.DPR);
     this.cv.height = Math.round(this.cv.clientHeight * this.DPR);
     this.ctx.setTransform(this.DPR, 0, 0, this.DPR, 0, 0);
- 
+
     this.logs = [
       "MEMORY CHECK............OK",
       "I/O CHIPSET.............OK",
@@ -1882,25 +1882,29 @@ class ArcadeBooter  {
     this.waitingForTap = false;
     this.onCompleteCalled = false;
     this.handleInput = this.handleInput.bind(this);
-    if(isElectron === false){
-    this.cv.addEventListener("mousedown", this.handleInput);
-    this.cv.addEventListener("touchstart", this.handleInput);
-    document.addEventListener("keydown", this.handleInput); 
-    
-    };
-    this.render();
+
+    if (isElectron === false) {
+      this.cv.addEventListener("mousedown", this.handleInput);
+      this.cv.addEventListener("touchstart", this.handleInput);
+      document.addEventListener("keydown", this.handleInput);
+    }
+
+    this._rafId = requestAnimationFrame(() => this.render());
   }
 
   handleInput(e) {
-    if (this.waitingForTap && !this.onCompleteCalled || isElectron === true && !this.onCompleteCalled) {
-       if (e.type === "keydown" && !this.action_buttons.main_button.includes(e.code)) {
-         return; 
-       }
- 
+    if ((this.waitingForTap && !this.onCompleteCalled) || (isElectron === true && !this.onCompleteCalled)) {
+      if (e && e.type === "keydown" && !this.action_buttons.main_button.includes(e.code)) {
+        return;
+      }
+
       this.onCompleteCalled = true;
+      if (this._rafId) cancelAnimationFrame(this._rafId);
+
       document.removeEventListener("keydown", this.handleInput);
       this.cv.removeEventListener("mousedown", this.handleInput);
       this.cv.removeEventListener("touchstart", this.handleInput);
+
       this.onComplete();
     }
   }
@@ -1914,11 +1918,9 @@ class ArcadeBooter  {
     const CW = cv.width / this.DPR;
     const CH = cv.height / this.DPR;
 
-    // Clear Screen
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, CW, CH);
 
-    // -------- PHASE 1: BIOS --------
     if (elapsed < 3000) {
       ctx.fillStyle = "#4af";
       ctx.font = "14px 'Courier New'";
@@ -1933,10 +1935,7 @@ class ArcadeBooter  {
       if (Math.floor(elapsed / 300) % 2) {
         ctx.fillRect(30, 65 + Math.min(lineCount, 4) * 25, 10, 2);
       }
-    }
-
-    // -------- PHASE 2: Logo Reveal --------
-    else if (elapsed < 6000) {
+    } else if (elapsed < 6000) {
       const alpha = Math.min(1, (elapsed - 3000) / 1000);
       ctx.globalAlpha = alpha;
       ctx.textAlign = "center";
@@ -1953,31 +1952,25 @@ class ArcadeBooter  {
       ctx.fillText("POWERED BY JARED VAN VALKENGOED", CW / 2, CH / 2 + 40);
 
       ctx.globalAlpha = 1;
-    }
+    } else {
+      if (isElectron === false) {
+        this.waitingForTap = true;
 
-    // -------- PHASE 3: Tap to Continue --------
-    else {
-      if(isElectron === false){
-       // if in browser, wait for tap to start sounds.
-      this.waitingForTap = true;
-  
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      
-      // Blinking effect 
-      ctx.globalAlpha = Math.floor(now / 500) % 2 ? 1 : 0;
-      ctx.fillStyle = "#fff";
-      ctx.font = "14px 'Courier New'";
-      ctx.fillText("TAP TO CONTINUE", CW / 2, CH / 2);
-      ctx.globalAlpha = 1;
-      }else{
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.globalAlpha = Math.floor(now / 500) % 2 ? 1 : 0;
+        ctx.fillStyle = "#fff";
+        ctx.font = "14px 'Courier New'";
+        ctx.fillText("TAP TO CONTINUE", CW / 2, CH / 2);
+        ctx.globalAlpha = 1;
+      } else {
         this.handleInput();
       }
-      
-      
     }
 
-    this.render();
+    // FIX: schedule next frame, don't call synchronously
+    this._rafId = requestAnimationFrame(() => this.render());
   }
 }
  
