@@ -216,47 +216,71 @@ class SoundManager {
     this._cache = {};
     this._current = null;
     this._positions = {}; // store playback positions
+    this._unlocked = false;
+    this._queue = []; // sounds requested before unlock
   }
 
   preloadAll() {
     if (!SOUND_ENABLED) return;
-
-    console.log("Preloading all sound effects...");
-
-    Object.keys(SFX_MAP).forEach(key => {
-      this._load(key);
-    });
+    Object.keys(SFX_MAP).forEach(key => this._load(key));
   }
 
   _load(key) {
     if (!SOUND_ENABLED) return null;
-
     if (!this._cache[key]) {
       const path = SFX_PATH + encodeURI(SFX_MAP[key]);
-
       const a = new Audio(path);
       a.preload = "auto";
       a.load();
- 
       this._cache[key] = a;
     }
     return this._cache[key];
   }
 
+  unlock() {
+    if (this._unlocked) return;
+    this._unlocked = true;
+
+    // Mobile Safari/Chrome need every Audio element touched once
+    Object.keys(this._cache).forEach(key => {
+      const a = this._cache[key];
+      if (!a) return;
+      a.play()
+        .then(() => {
+          a.pause();
+          a.currentTime = 0;
+        })
+        .catch(() => {});
+    });
+
+    // Flush queued sounds
+    this._queue.forEach(({ key, loop, rate }) => this._playNow(key, loop, rate));
+    this._queue = [];
+  }
+
   play(key, loop = false, rate = null) {
     if (!SOUND_ENABLED) return;
+    if (!this._unlocked) {
+      this._queue.push({ key, loop, rate });
+      return;
+    }
+    this._playNow(key, loop, rate);
+  }
 
+  _playNow(key, loop = false, rate = null) {
     const a = this._load(key);
     if (!a) return;
 
     a.loop = loop;
-    if(rate){
-      a.playbackRate = rate;
-    }
-    // resume if position exists, otherwise start fresh
+    if (rate) a.playbackRate = rate;
+
+    // Resume from saved position if any
     a.currentTime = this._positions[key] || 0;
 
-    a.play().catch(e => console.warn(`Playback failed for ${key}:`, e));
+    a.play().catch(e => {
+      // If it fails even after unlock, log but don't break state
+      console.warn(`Playback failed for ${key}:`, e);
+    });
   }
 
   stop(key) {
@@ -268,18 +292,14 @@ class SoundManager {
     }
   }
 
-  // ✅ Updated stopAll with preserve list
   stopAll(preserveKeys = []) {
     Object.keys(this._cache).forEach(key => {
       const a = this._cache[key];
       if (!a) return;
-
       if (preserveKeys.includes(key)) {
-        // pause and remember position
         this._positions[key] = a.currentTime;
         a.pause();
       } else {
-        // full stop
         a.pause();
         a.currentTime = 0;
         this._positions[key] = 0;
@@ -1931,6 +1951,10 @@ new ArcadeBooter(cv, ctx, ACTION_KEYS, () => {
     // This callback runs ONLY after the 6-second animation finishes
 
     setTimeout(() => {
+        // Unlock audio immediately on this user gesture
+        if (typeof sfx !== 'undefined' && sfx.unlock) {
+          sfx.unlock();
+        }
         const game = new Stacker(SETTINGS.credits_required);
         sfx.play("attract", true);
     }, 50); // wait to attach input to kick off attract mode
