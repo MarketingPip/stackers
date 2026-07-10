@@ -673,6 +673,7 @@ class Stacker {
 
   // ── Input ────────────────────────────────────────────────────
  _bindInput() {
+    this._lastTap = 0;
     cv.addEventListener("click", async (e) => {
       if (navigator.maxTouchPoints > 0) return; // ignore synthetic clicks on touch devices
       await this._action(e);
@@ -1188,7 +1189,7 @@ if (a && a.ended && !this.demoActive) {
           }
         }
       }
-      if (g.placeTime < 0) {
+      if (g.placeTime <= 0) {
         g.placeTime = 0;
         g.pos.y--;
         g.moveInterval = Math.max(1, g.moveInterval - g.mvTmDec);
