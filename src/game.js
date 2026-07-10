@@ -2006,54 +2006,71 @@ function fitToScreen() {
 }
 
 function _doFit() {
-  const gameWrap = document.getElementById('game-wrap');
-  const container = document.getElementById('rotate-container');
   const cv = document.getElementById('c');
   const side = document.getElementById('side');
+  const wrap = document.getElementById('wrap');
 
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  if (rotated) {
-    // Rotated: canvas visual dimensions are swapped
-    // CW = canvas width, CH = canvas height (from your game constants)
-    const availW = vh;  // viewport height becomes visual width
-    const availH = vw;  // viewport width becomes visual height
+  // Get side panel width
+  const sideW = side.classList.contains('hidden') ? 0 : side.offsetWidth + 16;
 
+  if (rotated) {
+    // In rotated mode, we want the canvas to fill the viewport in landscape
+    // The canvas internal dimensions are CW (width) x CH (height)
+    // When rotated 90deg, visual width = CH, visual height = CW
+    
+    const availW = vh;  // viewport height becomes available width
+    const availH = vw;  // viewport width becomes available height
+
+    // Scale to fit the rotated canvas
     const scaleX = availW / CH;
     const scaleY = availH / CW;
     const scale = Math.min(scaleX, scaleY);
 
-    // Size container to the rotated canvas
-    container.style.width = `${CH * scale}px`;
-    container.style.height = `${CW * scale}px`;
+    // Set canvas CSS size to the ROTATED dimensions
+    // The canvas element itself is rotated, so its CSS width/height
+    // should match the unrotated dimensions, then transform handles the rest
+    const cssW = CH * scale;
+    const cssH = CW * scale;
 
-    container.classList.add('rotated');
+    cv.style.width = `${cssW}px`;
+    cv.style.height = `${cssH}px`;
+    cv.style.transform = 'rotate(90deg)';
+    
+    // Center the rotated canvas
+    // After rotation, the element's corner is at center, so we offset
+    const offsetX = (cssH - cssW) / 2;
+    const offsetY = (cssW - cssH) / 2;
+    cv.style.marginLeft = `${offsetX}px`;
+    cv.style.marginTop = `${offsetY}px`;
+
+    wrap.style.flexDirection = 'column';
+    wrap.style.alignItems = 'center';
+    wrap.style.justifyContent = 'center';
 
   } else {
-    const sideW = side.classList.contains('hidden') ? 0 : side.offsetWidth;
-    const availW = vw - sideW - 16;
+    // Normal mode
+    const availW = vw - sideW;
     const availH = vh;
 
     const scaleX = availW / CW;
     const scaleY = availH / CH;
     const scale = Math.min(scaleX, scaleY);
 
-    container.style.width = `${CW * scale}px`;
-    container.style.height = `${CH * scale}px`;
+    cv.style.width = `${CW * scale}px`;
+    cv.style.height = `${CH * scale}px`;
+    cv.style.transform = 'none';
+    cv.style.marginLeft = '0';
+    cv.style.marginTop = '0';
 
-    container.classList.remove('rotated');
+    wrap.style.flexDirection = 'row';
+    wrap.style.alignItems = 'flex-start';
   }
-
-  // Canvas fills its container
-  cv.style.width = '100%';
-  cv.style.height = '100%';
 }
 
-window.addEventListener('resize', fitToScreen);
-window.addEventListener('orientationchange', fitToScreen);
-
-// Touch coordinate mapping
+// Touch coordinate mapping for rotated canvas
 function getCanvasCoordinates(e, canvas) {
   const rect = canvas.getBoundingClientRect();
   let clientX, clientY;
@@ -2066,24 +2083,30 @@ function getCanvasCoordinates(e, canvas) {
     clientY = e.clientY;
   }
 
-  let x = clientX - rect.left;
-  let y = clientY - rect.top;
+  // Raw position within the CSS box (before transform)
+  const rawX = clientX - rect.left;
+  const rawY = clientY - rect.top;
 
-  // Map to rotated canvas space
+  // The canvas is rotated 90deg clockwise
+  // CSS width = CH*scale, CSS height = CW*scale (swapped from internal)
+  // Internal CW x CH maps to visual CSS box of CH*scale x CW*scale
+  
+  // For a 90deg clockwise rotation:
+  // Visual (x,y) -> Internal (y, CW - x) * scale factor
+  const scale = rect.width / CH; // = rect.height / CW
+  
+  let x, y;
+  
   if (rotated) {
-    const tempX = x;
-    x = y;
-    y = (rect.height) - tempX;
+    // Map from visual CSS coordinates to internal canvas coordinates
+    x = rawY / scale;
+    y = (CW - rawX) / scale;
+  } else {
+    x = rawX / scale;
+    y = rawY / scale;
   }
 
-  // Scale to internal canvas resolution
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-
-  return {
-    x: x * scaleX,
-    y: y * scaleY
-  };
+  return { x, y };
 }
 
 // Rotate button
@@ -2093,7 +2116,6 @@ const devBtn = document.getElementById('devBtn');
 rotateBtn.onclick = () => {
   rotated = !rotated;
   const side = document.getElementById('side');
-  const devBtn = document.getElementById('devBtn');
 
   if (rotated) {
     side.classList.add('hidden');
@@ -2111,7 +2133,8 @@ devBtn.onclick = () => {
   devPanel.classList.toggle('hidden');
 };
 
-// Initial fit
+window.addEventListener('resize', fitToScreen);
+window.addEventListener('orientationchange', fitToScreen);
 fitToScreen();
  
 /*
