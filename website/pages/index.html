@@ -44,28 +44,22 @@
 {% endif %}
 
 {% assign windows_zip = "" %}
-{% assign linux_zip = "" %}    
+{% assign linux_archive = "" %}    
 
 {% if site.github.latest_release %}
   {% for asset in site.github.latest_release.assets %}
     {% assign name = asset.name | downcase %}
-    {% if name contains "windows" and name contains ".zip" %}
+    
+    {% if windows_zip == "" and name contains "win" and name contains ".zip" %}
       {% assign windows_zip = asset %}
-      {% break %}
     {% endif %}
+    
+    {% if linux_archive == "" and name contains "linux" %}
+      {% assign linux_archive = asset %}
+    {% endif %}
+    
   {% endfor %}
 {% endif %}
-
-{% if site.github.latest_release %}
-  {% for asset in site.github.latest_release.assets %}
-    {% assign name = asset.name | downcase %}
-    {% if name contains "linux" and name contains ".zip" %}
-      {% assign linux_zip = asset %}
-      {% break %}
-    {% endif %}
-  {% endfor %}
-{% endif %}    
-
     
 <body class="bg-dark text-text-primary antialiased arcade-grid">
 
